@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
@@ -42,7 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kira.companion.KiraApplication
 import com.kira.companion.KiraViewModelFactory
 import com.kira.companion.R
-import com.kira.companion.ui.components.KiraAvatar
+import com.kira.companion.ui.character.KiraCharacterView
 import com.kira.companion.ui.permission.OverlayPermissionScreen
 
 @Composable
@@ -52,7 +53,6 @@ fun HomeScreen(onNavigateChat: () -> Unit, onNavigateSettings: () -> Unit) {
     val viewModel: HomeViewModel = viewModel(factory = KiraViewModelFactory(app))
 
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
-    val emotion by viewModel.emotion.collectAsStateWithLifecycle()
 
     var hasPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -87,7 +87,11 @@ fun HomeScreen(onNavigateChat: () -> Unit, onNavigateSettings: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        KiraAvatar(emotion = emotion, sizeDp = 150.dp)
+        KiraCharacterView(
+            modelStatusRepository = app.modelStatusRepository,
+            behaviorController = app.behaviorController,
+            modifier = Modifier.size(220.dp),
+        )
         Spacer(modifier = Modifier.height(20.dp))
         Text(text = stringResource(R.string.home_title), style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(8.dp))
