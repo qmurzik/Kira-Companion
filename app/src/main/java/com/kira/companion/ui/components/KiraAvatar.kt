@@ -330,6 +330,20 @@ private fun DrawScope.drawKiraFace(emotion: KiraEmotion, eyeOpenness: Float) {
             closedEye(leftEye)
             openEye(rightEye)
         }
+        KiraEmotion.WORRIED -> {
+            openEye(leftEye)
+            openEye(rightEye)
+            eyebrow(leftEye, 25f)
+            eyebrow(rightEye, 155f)
+        }
+        KiraEmotion.EMBARRASSED -> {
+            openEye(leftEye, pupilShiftX = -1f)
+            openEye(rightEye, pupilShiftX = -1f)
+        }
+        KiraEmotion.SMUG -> {
+            closedEye(leftEye)
+            openEye(rightEye, pupilShiftX = 1f)
+        }
     }
 
     val mouthPath = Path()
@@ -406,6 +420,12 @@ private fun DrawScope.drawEmotionAccent(emotion: KiraEmotion) {
         KiraEmotion.THINKING -> drawDots(Offset(x(78f), y(38f)), s)
         KiraEmotion.SURPRISED -> drawExclaim(Offset(x(80f), y(32f)), 5f * s, HairColor)
         KiraEmotion.WINK -> drawHeartFloat(Offset(x(78f), y(30f)), 5f * s, AccentPink)
+        KiraEmotion.WORRIED -> drawDroplet(Offset(x(78f), y(40f)), 3.4f * s, TearBlue)
+        KiraEmotion.EMBARRASSED -> {
+            drawCircle(color = BlushColor, radius = 8f * s, center = Offset(x(37f), y(68f)))
+            drawCircle(color = BlushColor, radius = 8f * s, center = Offset(x(71f), y(68f)))
+        }
+        KiraEmotion.SMUG -> drawDots(Offset(x(78f), y(38f)), s)
         KiraEmotion.IDLE, KiraEmotion.HAPPY, KiraEmotion.LAUGHING -> Unit
     }
 }
