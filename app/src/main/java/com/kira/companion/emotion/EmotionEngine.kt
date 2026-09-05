@@ -1,7 +1,16 @@
 package com.kira.companion.emotion
 
 import com.kira.companion.model.KiraEmotion
+import com.kira.companion.model.spec
 import java.util.Locale
+
+/** The result of analyzing one message: which emotion, how strongly, and for how long. */
+data class EmotionResult(
+    val emotion: KiraEmotion,
+    /** 0..1. Driven by keyword strength plus emphasis (ALL CAPS, "!!!", emoji). */
+    val intensity: Float,
+    val durationMillis: Long,
+)
 
 /**
  * Local, rule-based text -> emotion classifier. No network, no ML model — just
@@ -41,9 +50,13 @@ object EmotionEngine : EmotionClassifier {
                 words("crying"),
         ),
         Rule(
+            // "❤️" is deliberately excluded here: it's used too casually (e.g. a friendly
+            // "привет ❤️") to always mean a LOVE-intensity declaration - it still boosts
+            // intensity via the emoji bonus in analyze(). The stronger/less ambiguous
+            // hearts and explicit "люблю"/"love" wording still classify as LOVE outright.
             KiraEmotion.LOVE,
             words("люблю", "любимая", "любимый", "обожаю", "скучаю", "love", "adore", "miss you", "sweetheart") +
-                literal("❤️", "💜", "💕", "😍", "🥰"),
+                literal("💜", "💕", "😍", "🥰"),
         ),
         Rule(
             KiraEmotion.SHY,
@@ -51,6 +64,10 @@ object EmotionEngine : EmotionClassifier {
                 "милая", "милый", "красивая", "красивый", "симпатичная", "прелесть",
                 "cutie", "gorgeous", "beautiful", "adorable",
             ) + literal("ты такая", "you're so cute", "😳", "☺️"),
+        ),
+        Rule(
+            KiraEmotion.EMBARRASSED,
+            words("стыдно", "неловко", "смущена", "смущён", "embarrassed", "awkward", "so embarrassing"),
         ),
         Rule(
             KiraEmotion.LAUGHING,
@@ -68,6 +85,13 @@ object EmotionEngine : EmotionClassifier {
             KiraEmotion.ANGRY,
             words("бесит", "злюсь", "ненавижу", "раздражает", "достало", "злой", "angry", "furious", "hate", "mad", "annoyed") +
                 literal("😡", "🤬"),
+        ),
+        Rule(
+            KiraEmotion.WORRIED,
+            words(
+                "переживаю", "волнуюсь", "боюсь", "тревожно", "переживает", "беспокоюсь",
+                "worried", "nervous", "anxious", "scared",
+            ),
         ),
         Rule(
             KiraEmotion.SAD,
@@ -95,6 +119,10 @@ object EmotionEngine : EmotionClassifier {
                 literal("🤔"),
         ),
         Rule(
+            KiraEmotion.SMUG,
+            words("хвастаюсь", "я же говорила", "я же говорил", "told you so", "smug") + literal("😏"),
+        ),
+        Rule(
             KiraEmotion.WINK,
             words("подмигиваю", "подмигни", "шучу", "wink") + literal(";)", "😉"),
         ),
@@ -109,6 +137,26 @@ object EmotionEngine : EmotionClassifier {
                 words("hello", "hi", "hey", "thanks", "thank you", "great", "good", "glad") +
                 literal("😊", "🙂", "😄", "😃"),
         ),
+    )
+
+    private val baseIntensity: Map<KiraEmotion, Float> = mapOf(
+        KiraEmotion.IDLE to 0.3f,
+        KiraEmotion.HAPPY to 0.55f,
+        KiraEmotion.LOVE to 0.75f,
+        KiraEmotion.SHY to 0.5f,
+        KiraEmotion.THINKING to 0.4f,
+        KiraEmotion.SURPRISED to 0.65f,
+        KiraEmotion.SAD to 0.85f,
+        KiraEmotion.ANGRY to 0.7f,
+        KiraEmotion.SLEEPY to 0.5f,
+        KiraEmotion.EXCITED to 0.7f,
+        KiraEmotion.CONFUSED to 0.5f,
+        KiraEmotion.WINK to 0.5f,
+        KiraEmotion.LAUGHING to 0.7f,
+        KiraEmotion.CRYING to 0.95f,
+        KiraEmotion.WORRIED to 0.6f,
+        KiraEmotion.EMBARRASSED to 0.55f,
+        KiraEmotion.SMUG to 0.55f,
     )
 
     override fun classify(message: String, previousEmotion: KiraEmotion): KiraEmotion {
@@ -134,5 +182,32 @@ object EmotionEngine : EmotionClassifier {
             questions >= 1 -> KiraEmotion.CONFUSED
             else -> previousEmotion
         }
+    }
+
+    /**
+     * Full analysis used by the chat/behavior system: classifies the message, then
+     * derives an intensity (0..1) from emphasis - ALL CAPS, repeated "!", emoji - and a
+     * suggested duration scaled from the emotion's normal lingering time by that
+     * intensity (a strongly-felt reaction lingers a bit longer than a mild one).
+     */
+    fun analyze(message: String, previousEmotion: KiraEmotion = KiraEmotion.IDLE): EmotionResult {
+        val emotion = classify(message, previousEmotion)
+        val trimmed = message.trim()
+
+        val exclamations = trimmed.count { it == '!' }
+        val isShouting = trimmed.length > 3 && trimmed == trimmed.uppercase(Locale.getDefault()) &&
+            trimmed.any { it.isLetter() }
+        val hasEmoji = trimmed.codePoints().anyMatch { cp -> cp >= 0x1F000 || cp in 0x2600..0x27BF }
+
+        var intensity = baseIntensity[emotion] ?: 0.5f
+        if (isShouting) intensity += 0.2f
+        intensity += exclamations.coerceAtMost(3) * 0.1f
+        if (hasEmoji) intensity += 0.1f
+        intensity = intensity.coerceIn(0f, 1f)
+
+        val baseDuration = emotion.spec().autoReturnToIdleMillis.takeIf { it > 0 } ?: 2500L
+        val duration = (baseDuration * (0.7 + 0.6 * intensity)).toLong()
+
+        return EmotionResult(emotion = emotion, intensity = intensity, durationMillis = duration)
     }
 }

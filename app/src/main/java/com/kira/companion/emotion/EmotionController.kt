@@ -27,18 +27,29 @@ class EmotionController(private val scope: CoroutineScope) {
     private val _emotion = MutableStateFlow(KiraEmotion.default)
     val emotion: StateFlow<KiraEmotion> = _emotion.asStateFlow()
 
+    /** The full analysis (emotion + intensity + duration) behind the current [emotion], if it
+     *  came from [onUserMessage]/[onKiraReply]. Null for manually-set or tap/random reactions -
+     *  those don't carry a meaningful intensity. Consumed by the render layer to scale blend
+     *  shape weights (e.g. a mild "грустно" vs. a "мне очень плохо" should not look identical). */
+    private val _lastAnalysis = MutableStateFlow<EmotionResult?>(null)
+    val lastAnalysis: StateFlow<EmotionResult?> = _lastAnalysis.asStateFlow()
+
     private var revertJob: Job? = null
     private var stateEnteredAtMillis: Long = System.currentTimeMillis()
 
     fun currentStateDurationMillis(): Long = System.currentTimeMillis() - stateEnteredAtMillis
 
-    /** Directly set an emotion (e.g. manually from the debug/emotions menu). */
-    fun setEmotion(emotion: KiraEmotion) {
+    /**
+     * Directly set an emotion (e.g. manually from the debug/emotions menu, or a tap/random
+     * reaction). [autoReturnOverrideMillis] lets callers that already computed a duration (via
+     * [EmotionEngine.analyze]) use it instead of the emotion's default spec duration.
+     */
+    fun setEmotion(emotion: KiraEmotion, autoReturnOverrideMillis: Long? = null) {
         revertJob?.cancel()
         _emotion.value = emotion
         stateEnteredAtMillis = System.currentTimeMillis()
 
-        val autoReturnMillis = emotion.spec().autoReturnToIdleMillis
+        val autoReturnMillis = autoReturnOverrideMillis ?: emotion.spec().autoReturnToIdleMillis
         if (autoReturnMillis > 0) {
             revertJob = scope.launch {
                 delay(autoReturnMillis)
@@ -49,14 +60,16 @@ class EmotionController(private val scope: CoroutineScope) {
 
     /** Feed a new user chat message through the emotion engine and react to it. */
     fun onUserMessage(text: String) {
-        val next = EmotionEngine.classify(text, _emotion.value)
-        setEmotion(next)
+        val result = EmotionEngine.analyze(text, _emotion.value)
+        _lastAnalysis.value = result
+        setEmotion(result.emotion, result.durationMillis)
     }
 
     /** React to Kira's own reply once it arrives, so her expression matches what she "said". */
     fun onKiraReply(text: String) {
-        val next = EmotionEngine.classify(text, _emotion.value)
-        setEmotion(next)
+        val result = EmotionEngine.analyze(text, _emotion.value)
+        _lastAnalysis.value = result
+        setEmotion(result.emotion, result.durationMillis)
     }
 
     /** Called while Kira is waiting on an AI response. */

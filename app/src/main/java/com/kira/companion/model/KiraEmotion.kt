@@ -19,7 +19,10 @@ enum class KiraEmotion {
     CONFUSED,
     WINK,
     LAUGHING,
-    CRYING;
+    CRYING,
+    WORRIED,
+    EMBARRASSED,
+    SMUG;
 
     companion object {
         val default: KiraEmotion = IDLE
@@ -50,4 +53,7 @@ fun KiraEmotion.spec(): EmotionSpec = when (this) {
     KiraEmotion.WINK -> EmotionSpec(autoReturnToIdleMillis = 1800L, eligibleForRandomReaction = true)
     KiraEmotion.LAUGHING -> EmotionSpec(autoReturnToIdleMillis = 2600L, eligibleForRandomReaction = true)
     KiraEmotion.CRYING -> EmotionSpec(autoReturnToIdleMillis = 4200L, eligibleForRandomReaction = false)
+    KiraEmotion.WORRIED -> EmotionSpec(autoReturnToIdleMillis = 3200L, eligibleForRandomReaction = false)
+    KiraEmotion.EMBARRASSED -> EmotionSpec(autoReturnToIdleMillis = 2800L, eligibleForRandomReaction = true)
+    KiraEmotion.SMUG -> EmotionSpec(autoReturnToIdleMillis = 2400L, eligibleForRandomReaction = true)
 }

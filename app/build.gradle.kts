@@ -111,11 +111,19 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    // Real-time 3D rendering for Kira's VRM character: Google Filament (PBR engine) via
+    // SceneView's Compose-native wrapper. See render/ package and README.md.
+    implementation("io.github.sceneview:sceneview:4.34.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    // Android's org.json is stub-only on the plain JVM unit test classpath; this is the
+    // real implementation (same package/class names) so VrmJsonParser tests can actually
+    // parse JSON. Production builds keep using the on-device android.jar implementation.
+    testImplementation("org.json:json:20240303")
 
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

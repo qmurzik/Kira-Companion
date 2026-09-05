@@ -2,6 +2,7 @@ package com.kira.companion.emotion
 
 import com.kira.companion.model.KiraEmotion
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EmotionEngineTest {
@@ -106,5 +107,70 @@ class EmotionEngineTest {
     fun `blank message keeps previous emotion`() {
         assertEquals(KiraEmotion.SAD, EmotionEngine.classify("   ", KiraEmotion.SAD))
         assertEquals(KiraEmotion.LOVE, EmotionEngine.classify("", KiraEmotion.LOVE))
+    }
+
+    @Test
+    fun `worry keyword is worried`() {
+        assertEquals(KiraEmotion.WORRIED, EmotionEngine.classify("я переживаю за тебя", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `embarrassment keyword is embarrassed`() {
+        assertEquals(KiraEmotion.EMBARRASSED, EmotionEngine.classify("мне так стыдно", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `told you so is smug`() {
+        assertEquals(KiraEmotion.SMUG, EmotionEngine.classify("я же говорила", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `a bare heart emoji does not force love on its own`() {
+        // A casual "hi (heart)" should read as a warm HAPPY greeting, not a LOVE declaration -
+        // only stronger phrasing ("люблю") or the less-ambiguous hearts commit to LOVE.
+        assertEquals(KiraEmotion.HAPPY, EmotionEngine.classify("привет ❤️", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `analyze greeting with heart is happy with moderate-high intensity`() {
+        val result = EmotionEngine.analyze("привет ❤️")
+        assertEquals(KiraEmotion.HAPPY, result.emotion)
+        assertTrue("intensity was ${result.intensity}", result.intensity in 0.5f..0.9f)
+    }
+
+    @Test
+    fun `analyze shouted love declaration is love at max intensity`() {
+        val result = EmotionEngine.analyze("Я ТЕБЯ ЛЮБЛЮ!!!")
+        assertEquals(KiraEmotion.LOVE, result.emotion)
+        assertEquals(1f, result.intensity, 0.001f)
+    }
+
+    @Test
+    fun `analyze plain sadness is sad with high intensity`() {
+        val result = EmotionEngine.analyze("мне грустно")
+        assertEquals(KiraEmotion.SAD, result.emotion)
+        assertTrue("intensity was ${result.intensity}", result.intensity >= 0.7f)
+    }
+
+    @Test
+    fun `analyze shouted wow is surprised or excited at max intensity`() {
+        val result = EmotionEngine.analyze("ВАУ!!!")
+        assertTrue(result.emotion == KiraEmotion.SURPRISED || result.emotion == KiraEmotion.EXCITED)
+        assertEquals(1f, result.intensity, 0.001f)
+    }
+
+    @Test
+    fun `analyze duration scales up with intensity`() {
+        val mild = EmotionEngine.analyze("грустно")
+        val strong = EmotionEngine.analyze("ГРУСТНО!!!")
+        assertTrue(strong.durationMillis >= mild.durationMillis)
+    }
+
+    @Test
+    fun `analyze on an empty message keeps previous emotion with a valid intensity`() {
+        val result = EmotionEngine.analyze("", previousEmotion = KiraEmotion.HAPPY)
+        assertEquals(KiraEmotion.HAPPY, result.emotion)
+        assertTrue(result.intensity in 0f..1f)
+        assertTrue(result.durationMillis > 0L)
     }
 }
