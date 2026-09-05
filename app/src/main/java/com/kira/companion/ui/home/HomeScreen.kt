@@ -68,6 +68,7 @@ fun HomeScreen(onNavigateChat: () -> Unit, onNavigateSettings: () -> Unit) {
 
     if (!hasPermission) {
         OverlayPermissionScreen(
+            app = app,
             onOpenSettings = {
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,

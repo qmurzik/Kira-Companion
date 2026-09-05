@@ -57,8 +57,7 @@ import com.kira.companion.ai.openChatGpt
 import com.kira.companion.model.AiProviderType
 import com.kira.companion.model.ChatMessage
 import com.kira.companion.model.ChatRole
-import com.kira.companion.model.KiraEmotion
-import com.kira.companion.ui.components.KiraAvatar
+import com.kira.companion.ui.character.KiraCharacterView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,12 +69,11 @@ fun ChatScreen() {
     val aiProvider by viewModel.aiProvider.collectAsStateWithLifecycle()
 
     if (aiProvider == AiProviderType.CHATGPT) {
-        ChatGptRedirectScreen(onOpenChatGpt = { openChatGpt(context) })
+        ChatGptRedirectScreen(app = app, onOpenChatGpt = { openChatGpt(context) })
         return
     }
 
     val messages by viewModel.messages.collectAsStateWithLifecycle()
-    val emotion by viewModel.emotion.collectAsStateWithLifecycle()
     val isTyping by viewModel.isTyping.collectAsStateWithLifecycle()
 
     var inputText by remember { mutableStateOf("") }
@@ -131,11 +129,11 @@ fun ChatScreen() {
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(messages, key = { it.id }) { message ->
-                        ChatBubble(message = message, emotion = emotion)
+                        ChatBubble(message = message)
                     }
                     if (isTyping) {
                         item(key = "typing-indicator") {
-                            TypingBubble(emotion = emotion)
+                            TypingBubble()
                         }
                     }
                 }
@@ -162,16 +160,12 @@ fun ChatScreen() {
 }
 
 @Composable
-private fun ChatBubble(message: ChatMessage, emotion: KiraEmotion) {
+private fun ChatBubble(message: ChatMessage) {
     val isUser = message.role == ChatRole.USER
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
     ) {
-        if (!isUser) {
-            KiraAvatar(emotion = emotion, sizeDp = 36.dp)
-            Spacer(modifier = Modifier.width(8.dp))
-        }
         Card(
             modifier = Modifier.widthIn(max = 260.dp),
             shape = RoundedCornerShape(
@@ -202,10 +196,8 @@ private fun ChatBubble(message: ChatMessage, emotion: KiraEmotion) {
 }
 
 @Composable
-private fun TypingBubble(emotion: KiraEmotion) {
+private fun TypingBubble() {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-        KiraAvatar(emotion = emotion, sizeDp = 36.dp)
-        Spacer(modifier = Modifier.width(8.dp))
         Card(
             shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = 4.dp, bottomEnd = 18.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -256,7 +248,7 @@ private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend:
  * hands off to the official ChatGPT app/website.
  */
 @Composable
-private fun ChatGptRedirectScreen(onOpenChatGpt: () -> Unit) {
+private fun ChatGptRedirectScreen(app: KiraApplication, onOpenChatGpt: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -264,7 +256,11 @@ private fun ChatGptRedirectScreen(onOpenChatGpt: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        KiraAvatar(emotion = KiraEmotion.IDLE, sizeDp = 120.dp)
+        KiraCharacterView(
+            modelStatusRepository = app.modelStatusRepository,
+            behaviorController = app.behaviorController,
+            modifier = Modifier.size(120.dp),
+        )
         Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = stringResource(R.string.chat_via_chatgpt_title),
