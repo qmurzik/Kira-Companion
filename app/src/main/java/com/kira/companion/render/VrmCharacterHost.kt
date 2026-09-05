@@ -6,8 +6,8 @@ import androidx.compose.ui.Modifier
 import com.kira.companion.behavior.BlendShapePresets
 import com.kira.companion.behavior.KiraBehaviorController
 import com.kira.companion.vrm.VrmModelData
-import io.github.sceneview.ModelNode
 import io.github.sceneview.SceneView
+import io.github.sceneview.model.model
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
 
