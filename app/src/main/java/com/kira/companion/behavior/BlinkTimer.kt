@@ -93,7 +93,11 @@ class BlinkTimer(
         }
     }
 
-    private fun randomInterval() = random.nextLong(minIntervalMillis, maxIntervalMillis)
+    private fun randomInterval() = if (minIntervalMillis >= maxIntervalMillis) {
+        minIntervalMillis
+    } else {
+        random.nextLong(minIntervalMillis, maxIntervalMillis)
+    }
     private fun randomCloseDuration() = 40L + random.nextLong(30L)
     private fun randomHoldDuration() = 30L + random.nextLong(60L)
     private fun randomOpenDuration() = 60L + random.nextLong(60L)

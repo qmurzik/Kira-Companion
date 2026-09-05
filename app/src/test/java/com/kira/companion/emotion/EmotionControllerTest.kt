@@ -24,6 +24,7 @@ class EmotionControllerTest {
         assertEquals(KiraEmotion.HAPPY, controller.emotion.value)
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     @Test
     fun `setEmotion auto-reverts to idle after its configured duration`() = runTest {
         val controller = EmotionController(this)
