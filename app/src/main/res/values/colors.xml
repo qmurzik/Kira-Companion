@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="kira_purple_10">#F4EBFF</color>
+    <color name="kira_purple_40">#8B5CF6</color>
+    <color name="kira_purple_60">#6D28D9</color>
+    <color name="kira_purple_90">#2E1065</color>
+    <color name="kira_pink_40">#EC4899</color>
+    <color name="kira_pink_80">#831843</color>
+    <color name="kira_bg_light">#FFF8FC</color>
+    <color name="kira_bg_dark">#160B23</color>
+    <color name="kira_surface_light">#FFFFFF</color>
+    <color name="kira_surface_dark">#241435</color>
+</resources>

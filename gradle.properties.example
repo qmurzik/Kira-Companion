@@ -1,0 +1,14 @@
+# Copy this file to a local "keystore.properties" (NOT gradle.properties) if you want to
+# sign release builds locally instead of through GitHub Actions secrets.
+#
+# storeFile=/absolute/path/to/release.keystore
+# storePassword=CHANGE_ME
+# keyAlias=kira
+# keyPassword=CHANGE_ME
+#
+# NEVER commit a real keystore.properties or a real keystore file to git.
+# For CI builds, configure these GitHub Actions secrets instead (see README.md):
+#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+#
+# For the OpenAI-backed chat provider, the API key is entered by the user at runtime
+# in Settings -> API configuration. It is never stored in source code or in this file.

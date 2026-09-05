@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- hair silhouette -->
+    <path
+        android:fillColor="#211433"
+        android:pathData="M54,18
+            C71.9,18 84,32.9 84,49
+            C84,60 79,68 79,78
+            L74,78
+            C74,68 76,58 68,50
+            C64,58 44,58 40,50
+            C32,58 34,68 34,78
+            L29,78
+            C29,68 24,60 24,49
+            C24,32.9 36.1,18 54,18 Z" />
+    <!-- face -->
+    <path
+        android:fillColor="#FFE3C7"
+        android:pathData="M54,38
+            C67.25,38 76,47.8 76,60
+            C76,74.4 65.9,86 54,86
+            C42.1,86 32,74.4 32,60
+            C32,47.8 40.75,38 54,38 Z" />
+    <!-- eyes -->
+    <path
+        android:fillColor="#6D28D9"
+        android:pathData="M44,60 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path
+        android:fillColor="#6D28D9"
+        android:pathData="M64,60 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <!-- smile -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#B4587A"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M47,72 C50,76 58,76 61,72" />
+    <!-- hair clip accent -->
+    <path
+        android:fillColor="#EC4899"
+        android:pathData="M67,34 l6,-3 l1.8,5.6 l-6,3 Z" />
+</vector>
