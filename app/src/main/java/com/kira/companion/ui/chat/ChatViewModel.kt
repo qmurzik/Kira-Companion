@@ -46,7 +46,7 @@ class ChatViewModel(private val app: KiraApplication) : ViewModel() {
             _isTyping.value = true
             app.emotionController.onWaitingForReply()
 
-            val history = app.chatHistoryStore.messages.value.map { it.role == ChatRole.USER to it.text }
+            val history = app.chatHistoryStore.messages.value.map { (it.role == ChatRole.USER) to it.text }
             val provider = app.aiProviderFactory.current()
             val replyText = try {
                 provider.sendMessage(trimmed, history)

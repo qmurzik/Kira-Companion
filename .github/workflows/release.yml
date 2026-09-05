@@ -37,11 +37,16 @@ jobs:
       # If signing secrets are configured, decode the keystore for a properly
       # signed release. Otherwise assembleRelease falls back to debug signing
       # (see app/build.gradle.kts) so a release APK is still produced.
-      - name: Decode signing keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      - name: Decode signing keystore (if configured)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
-          echo "KIRA_RELEASE_STORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "KIRA_RELEASE_STORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+          else
+            echo "No KEYSTORE_BASE64 secret configured; assembleRelease will fall back to debug signing."
+          fi
 
       - name: Run unit tests
         run: ./gradlew test --stacktrace
