@@ -5,8 +5,10 @@ import java.util.Locale
 
 /**
  * Local, rule-based text -> emotion classifier. No network, no ML model — just
- * keyword/regex matching over Russian and English phrases, plus simple punctuation
- * heuristics (lots of "!" -> excitement, "?" -> confusion/curiosity).
+ * keyword/regex/emoji matching over Russian and English phrases, plus punctuation and
+ * repeated-character heuristics (lots of "!" -> excitement, "?" -> confusion/curiosity,
+ * "хаха"/"lol" -> laughing). Rules are checked in a fixed priority order so a single
+ * phrase never produces a random/conflicting result.
  *
  * This is deliberately a single pure function behind a small interface so it can be
  * swapped later for an on-device or remote AI-based classifier without touching
@@ -20,69 +22,92 @@ object EmotionEngine : EmotionClassifier {
 
     private data class Rule(val emotion: KiraEmotion, val patterns: List<Regex>)
 
-    private fun words(vararg words: String): List<Regex> =
-        words.map { Regex("(?i)\\b${Regex.escape(it)}\\w*") }
+    /** Whole-word matches (with optional Russian/English suffixes), for one or more phrases. */
+    private fun words(vararg phrases: String): List<Regex> =
+        phrases.map { Regex("(?i)\\b${Regex.escape(it)}\\w*") }
 
+    /** Exact substring matches - for emoji or short glyphs where word-boundary rules don't apply. */
+    private fun literal(vararg strings: String): List<Regex> =
+        strings.map { Regex(Regex.escape(it)) }
+
+    // Checked top to bottom: the first rule whose pattern matches wins. Order encodes
+    // priority, e.g. an explicit "люблю" should win over a generic "!!!" heuristic, and
+    // a compliment about Kira ("милая") should read as SHY rather than LOVE.
     private val rules: List<Rule> = listOf(
         Rule(
+            KiraEmotion.CRYING,
+            words("рыдаю", "навзрыд", "плачу", "sobbing", "рыдаешь") +
+                literal("мне очень плохо", "😭", "😢") +
+                words("crying"),
+        ),
+        Rule(
             KiraEmotion.LOVE,
-            words(
-                "люблю", "любимая", "любимый", "обожаю", "милая", "милый", "скучаю",
-                "love", "adore", "miss you", "cutie", "sweetheart",
-            ),
+            words("люблю", "любимая", "любимый", "обожаю", "скучаю", "love", "adore", "miss you", "sweetheart") +
+                literal("❤️", "💜", "💕", "😍", "🥰"),
         ),
         Rule(
-            KiraEmotion.EXCITED,
+            KiraEmotion.SHY,
             words(
-                "ура", "круто", "класс", "потрясающе", "вперед", "вперёд", "awesome",
-                "yay", "woohoo", "let's go", "лучший день",
-            ),
+                "милая", "милый", "красивая", "красивый", "симпатичная", "прелесть",
+                "cutie", "gorgeous", "beautiful", "adorable",
+            ) + literal("ты такая", "you're so cute", "😳", "☺️"),
         ),
         Rule(
-            KiraEmotion.SAD,
-            words(
-                "грустно", "грущу", "плохо", "плачу", "тоскливо", "одиноко", "устала морально",
-                "sad", "unhappy", "cry", "crying", "depressed", "lonely", "heartbroken",
-            ),
+            KiraEmotion.LAUGHING,
+            listOf(
+                Regex("(?i)(ха){2,}"),
+                Regex("(?i)(хи){2,}"),
+                Regex("(?i)ахах\\w*"),
+                Regex("(?i)\\bhaha\\w*"),
+                Regex("(?i)\\blol\\b"),
+                Regex("(?i)рофл\\w*"),
+                Regex("(?i)смешно"),
+            ) + literal("😂", "🤣"),
         ),
         Rule(
             KiraEmotion.ANGRY,
-            words(
-                "бесит", "злюсь", "ненавижу", "раздражает", "достало", "злой",
-                "angry", "furious", "hate", "mad", "annoyed",
-            ),
+            words("бесит", "злюсь", "ненавижу", "раздражает", "достало", "злой", "angry", "furious", "hate", "mad", "annoyed") +
+                literal("😡", "🤬"),
+        ),
+        Rule(
+            KiraEmotion.SAD,
+            words("грустно", "грущу", "плохо", "тоскливо", "одиноко", "sad", "unhappy", "depressed", "lonely", "heartbroken"),
         ),
         Rule(
             KiraEmotion.SLEEPY,
-            words(
-                "устал", "устала", "хочу спать", "спать", "сонная", "сонный", "вымоталась",
-                "tired", "sleepy", "exhausted", "yawn", "gonna sleep",
-            ),
+            words("устал", "устала", "спать", "сонная", "сонный", "вымоталась", "tired", "sleepy", "exhausted", "yawn") +
+                literal("😴", "💤") +
+                words("gonna sleep"),
+        ),
+        Rule(
+            KiraEmotion.EXCITED,
+            words("ура", "круто", "класс", "потрясающе", "вперед", "вперёд", "awesome", "yay", "woohoo", "лучший день") +
+                literal("🎉", "✨"),
         ),
         Rule(
             KiraEmotion.SURPRISED,
-            words("вау", "ого", "оба", "невероятно", "wow", "whoa", "omg", "no way"),
+            words("вау", "ого", "оба", "невероятно", "wow", "whoa", "omg", "no way") +
+                literal("😮", "😲"),
         ),
         Rule(
             KiraEmotion.THINKING,
-            words(
-                "подожди", "думаю", "хм", "хмм", "надо подумать", "погоди",
-                "wait", "hmm", "let me think", "thinking",
-            ),
+            words("подожди", "думаю", "хм", "хмм", "надо подумать", "погоди", "wait", "hmm", "let me think", "thinking") +
+                literal("🤔"),
+        ),
+        Rule(
+            KiraEmotion.WINK,
+            words("подмигиваю", "подмигни", "шучу", "wink") + literal(";)", "😉"),
         ),
         Rule(
             KiraEmotion.CONFUSED,
-            words(
-                "что это", "не понимаю", "непонятно", "запуталась", "запутался", "как это",
-                "confused", "i don't understand", "huh", "what do you mean",
-            ),
+            words("что это", "не понимаю", "непонятно", "запуталась", "запутался", "как это", "confused", "huh", "what do you mean") +
+                literal("i don't understand", "😕"),
         ),
         Rule(
             KiraEmotion.HAPPY,
-            words(
-                "привет", "здравствуй", "рада", "рад", "спасибо", "хорошо", "отлично", "хех",
-                "hello", "hi", "hey", "thanks", "thank you", "great", "good", "glad",
-            ),
+            words("привет", "здравствуй", "как дела", "рада", "рад", "спасибо", "хорошо", "отлично", "хех") +
+                words("hello", "hi", "hey", "thanks", "thank you", "great", "good", "glad") +
+                literal("😊", "🙂", "😄", "😃"),
         ),
     )
 
@@ -107,7 +132,7 @@ object EmotionEngine : EmotionClassifier {
             isShouting || exclamations >= 2 -> KiraEmotion.SURPRISED
             exclamations == 1 -> KiraEmotion.HAPPY
             questions >= 1 -> KiraEmotion.CONFUSED
-            else -> KiraEmotion.HAPPY
+            else -> previousEmotion
         }
     }
 }

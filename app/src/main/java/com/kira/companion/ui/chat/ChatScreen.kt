@@ -19,8 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,14 +46,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kira.companion.KiraApplication
 import com.kira.companion.KiraViewModelFactory
 import com.kira.companion.R
+import com.kira.companion.ai.openChatGpt
+import com.kira.companion.model.AiProviderType
 import com.kira.companion.model.ChatMessage
 import com.kira.companion.model.ChatRole
+import com.kira.companion.model.KiraEmotion
 import com.kira.companion.ui.components.KiraAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +66,13 @@ fun ChatScreen() {
     val context = LocalContext.current
     val app = context.applicationContext as KiraApplication
     val viewModel: ChatViewModel = viewModel(factory = KiraViewModelFactory(app))
+
+    val aiProvider by viewModel.aiProvider.collectAsStateWithLifecycle()
+
+    if (aiProvider == AiProviderType.CHATGPT) {
+        ChatGptRedirectScreen(onOpenChatGpt = { openChatGpt(context) })
+        return
+    }
 
     val messages by viewModel.messages.collectAsStateWithLifecycle()
     val emotion by viewModel.emotion.collectAsStateWithLifecycle()
@@ -149,7 +162,7 @@ fun ChatScreen() {
 }
 
 @Composable
-private fun ChatBubble(message: ChatMessage, emotion: com.kira.companion.model.KiraEmotion) {
+private fun ChatBubble(message: ChatMessage, emotion: KiraEmotion) {
     val isUser = message.role == ChatRole.USER
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -189,7 +202,7 @@ private fun ChatBubble(message: ChatMessage, emotion: com.kira.companion.model.K
 }
 
 @Composable
-private fun TypingBubble(emotion: com.kira.companion.model.KiraEmotion) {
+private fun TypingBubble(emotion: KiraEmotion) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         KiraAvatar(emotion = emotion, sizeDp = 36.dp)
         Spacer(modifier = Modifier.width(8.dp))
@@ -233,6 +246,42 @@ private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend:
                 contentDescription = stringResource(R.string.chat_send),
                 tint = MaterialTheme.colorScheme.primary,
             )
+        }
+    }
+}
+
+/**
+ * Shown instead of the normal chat UI when the AI provider is set to ChatGPT: Kira has no
+ * local AI backend in this mode, so instead of a text box we simply offer a button that
+ * hands off to the official ChatGPT app/website.
+ */
+@Composable
+private fun ChatGptRedirectScreen(onOpenChatGpt: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        KiraAvatar(emotion = KiraEmotion.IDLE, sizeDp = 120.dp)
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = stringResource(R.string.chat_via_chatgpt_title),
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = stringResource(R.string.chat_via_chatgpt_explanation),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onOpenChatGpt, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Filled.OpenInNew, contentDescription = null)
+            Text(text = stringResource(R.string.chat_open_chatgpt), modifier = Modifier.padding(start = 8.dp))
         }
     }
 }

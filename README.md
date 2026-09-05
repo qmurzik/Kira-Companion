@@ -9,9 +9,22 @@ top of your other apps, reacts to taps, shows emotions, and chats with you.
   <img src="https://img.shields.io/badge/language-Kotlin-7F52FF" alt="Kotlin">
 </p>
 
-> Screenshots: this repo ships with a built-in, dependency-free procedural illustration
-> of Kira (see [Changing Kira's appearance](#changing-kiras-appearance)) instead of bundled
-> PNG screenshots, so the app is fully buildable and runnable without any binary art assets.
+> Kira ships with real character artwork in `app/src/main/assets/kira/emotions/` (14 poses,
+> circular avatar chips) plus a built-in, dependency-free procedural illustration as a
+> fallback (see [Changing Kira's appearance](#changing-kiras-appearance)), so the app is
+> fully buildable and runnable even if the art files are ever removed.
+
+## Two independent halves, on purpose
+
+- **Kira herself — fully local, no API key, ever.** The overlay, dragging, emotions,
+  animations, random reactions, settings, position memory, and local chat history all work
+  completely offline. Nothing about *being Kira* requires an account, a key, or a network call.
+- **Real AI conversation — via the official ChatGPT app/website.** This app never logs into
+  ChatGPT, never reads its cookies/session/tokens, and never treats a ChatGPT subscription as
+  an API. It just opens `https://chatgpt.com/` (the app if installed, the browser otherwise)
+  through a normal `Intent.ACTION_VIEW` when you ask to chat for real. An optional, fully
+  separate "Custom API" mode lets power users bring their own OpenAI-compatible key if they
+  want in-app AI replies instead — never required.
 
 ## Features
 
@@ -19,29 +32,37 @@ top of your other apps, reacts to taps, shows emotions, and chats with you.
   as a small draggable, tappable character.
 - **Drag & dock** — drag Kira anywhere; on release she snaps to the nearest screen edge and
   remembers her position (and size) across restarts.
-- **Emotion system** — ten emotions (`IDLE`, `HAPPY`, `SAD`, `THINKING`, `SURPRISED`, `ANGRY`,
-  `SLEEPY`, `CONFUSED`, `LOVE`, `EXCITED`), each with its own look, auto-return-to-idle timing,
-  and eligibility for spontaneous "random reactions".
+- **14-emotion system** — `IDLE`, `HAPPY`, `LOVE`, `SHY`, `THINKING`, `SURPRISED`, `SAD`,
+  `ANGRY`, `SLEEPY`, `EXCITED`, `CONFUSED`, `WINK`, `LAUGHING`, `CRYING`, each with its own
+  artwork/look, auto-return-to-idle timing, and eligibility for spontaneous "random reactions".
 - **Local, rule-based emotion engine** — no ML model needed for v1: Russian/English keyword
-  matching plus punctuation heuristics (`!`, `?`, ALL CAPS) pick an emotion from what you type.
-  The interface (`EmotionClassifier`) is swappable for a real AI-based classifier later.
-- **Idle/interaction animations** — gentle sway, periodic blinking, a tap "pop" reaction, and a
-  thinking wobble while Kira waits for a reply, all built with Compose animation APIs.
-- **Random spontaneous reactions** — configurable on/off and frequency (low/normal/high) so Kira
-  occasionally reacts on her own without ever becoming annoying.
-- **Long-press menu** — Chat / Emotions (debug cycle) / Settings / Hide Kira / Close app.
+  matching, emoji, repeated-character laughter patterns ("хаха", "lol"), and punctuation
+  heuristics (`!`, `?`, ALL CAPS) pick an emotion from what you type, in a fixed priority order
+  so one phrase never produces a random/conflicting result. The interface (`EmotionClassifier`)
+  is swappable for a real AI-based classifier later.
+- **Smooth emotion transitions** — Compose `AnimatedContent` cross-fades + scales between
+  expressions instead of ever swapping images instantly.
+- **Idle/interaction animations** — gentle sway, periodic blinking, a tap "pop" reaction, a
+  thinking wobble while Kira waits for a reply, and small floating accents (hearts, tears,
+  "Zzz", "!", "…") layered on top of whichever face art is showing.
+- **Random spontaneous reactions** — one setting with four levels: Off / Low / Normal / High,
+  so Kira occasionally reacts on her own without ever becoming annoying.
+- **Long-press menu** — Open ChatGPT / Emotion (debug cycle) / Settings / Hide Kira / Close app.
 - **Full chat screen** — bubbles, avatar, "Kira is typing…" indicator, multiline + emoji + full
-  Unicode/Cyrillic input, persisted history (JSON file on disk), and a "clear history" action.
-- **Swappable AI backend** — `AiProvider` interface with a `MockAiProvider` (works fully offline,
-  no API key needed) and an `OpenAiProvider` (brings your own OpenAI API key).
+  Unicode/Cyrillic input, persisted history (JSON file on disk), and a "clear history" action —
+  shown only in Local Demo / Custom API mode; in ChatGPT mode it's replaced by a single
+  "Open ChatGPT" card.
+- **Swappable AI backend** — `AiProvider` interface with a `LocalDemoAiProvider` (fully offline,
+  on-brand canned replies, for trying out the UI/emotion engine with zero setup) and an
+  `OpenAiProvider` for the optional, opt-in Custom API mode.
 - **Emotion carries context** — Kira's expression factors in the latest message *and* her
   previous state (`EmotionController`), so a sad message followed by good news correctly shifts
   her mood.
 - **Background reply notifications** — optional local notification if Kira's reply arrives after
-  you've left the app.
-- **Full settings screen** — overlay on/off, random reactions on/off + frequency, Kira's size,
-  sound, notifications, light/dark/system theme, AI provider + API key, clear history, reset
-  position, about.
+  you've left the app (Local Demo / Custom API modes only).
+- **Full settings screen** — overlay on/off, random reactions Off/Low/Normal/High, Kira's size,
+  sound, notifications, light/dark/system theme, AI provider (ChatGPT / Local Demo / Custom API)
+  + optional API key, clear history, reset position, about.
 - **Accessible & themeable** — content descriptions on the avatar, Material 3 dark/light/system
   theming throughout.
 
@@ -72,22 +93,30 @@ back into the app.
 
 ### Configuring AI (optional)
 
-By default Kira replies using a fully offline, rule-based **mock** provider — no setup, no network,
-no API key required. If you want real LLM-backed replies:
+Kira launches in **ChatGPT mode** by default — no setup, no network, no API key of any kind.
+Every companion feature (overlay, emotions, chat UI's own history/engine) already works before
+you touch this setting; it only decides what "real AI conversation" means:
 
-1. Open **Settings → Настройка ИИ**.
-2. Switch the provider to **OpenAI**.
-3. Paste your own OpenAI API key and tap the confirm button.
+- **ChatGPT** (default) — the chat screen shows a single "Open ChatGPT" button that hands off to
+  the official app/website via a plain `Intent.ACTION_VIEW`. This app never logs in, never reads
+  ChatGPT's cookies/session/tokens, and a ChatGPT subscription is never treated as API access.
+- **Local Demo** — a fully offline canned-response generator (`LocalDemoAiProvider`) so you can
+  try the full chat UI and emotion engine with zero setup.
+- **Custom API** — optional, opt-in: paste your own OpenAI-compatible API key for real in-app
+  replies. Never required to use any other part of the app.
+
+To switch: **Settings → Настройка ИИ → Источник ответов**, then (for Custom API only) paste your
+key and tap Save.
 
 The key is stored **encrypted on-device** (Android Keystore-backed `EncryptedSharedPreferences`)
-and is only ever sent directly to `api.openai.com` over HTTPS with your requests — never bundled
-into the APK, never committed to this repository, never sent anywhere else.
+and is only ever sent directly to your configured API endpoint over HTTPS with your requests —
+never bundled into the APK, never committed to this repository, never sent anywhere else.
 
 > **Security note:** storing a raw API key on a client device is inherently less safe than a
 > server-side proxy — a compromised/rooted device could still extract it from the running
-> process. This is an acceptable tradeoff for a personal-use v1 app. For a production/public
-> release, put your own backend between the app and OpenAI: the app authenticates to *your*
-> server, and only your server holds the real API key.
+> process. This is an acceptable tradeoff for a personal-use, opt-in feature. For a production/
+> public release, put your own backend between the app and the API: the app authenticates to
+> *your* server, and only your server holds the real key.
 
 ## Building locally
 
@@ -155,9 +184,9 @@ app/src/main/java/com/kira/companion/
 ├── KiraViewModelFactory.kt    # Tiny ViewModel factory (no DI framework needed at this size)
 ├── model/                     # KiraEmotion, ChatMessage, app-wide enums (size/theme/frequency/...)
 ├── emotion/                    # EmotionEngine (rule-based classifier) + EmotionController (state machine)
-├── ai/                         # AiProvider interface, MockAiProvider, OpenAiProvider, factory
+├── ai/                         # AiProvider interface, LocalDemoAiProvider, OpenAiProvider, factory, openChatGpt()
 ├── data/                       # SettingsRepository (DataStore), ChatHistoryStore (JSON file), SecureKeyStore
-├── image/                      # KiraImageProvider — optional PNG-in-assets override lookup
+├── image/                      # KiraImageProvider — assets/kira/emotions/*.png override lookup
 ├── overlay/                    # OverlayService (WindowManager + foreground service), gestures, menu UI
 ├── notifications/              # NotificationHelper (overlay + chat-reply notifications)
 ├── navigation/                 # Bottom-nav Compose NavHost (Home / Chat / Settings)
@@ -186,10 +215,11 @@ underneath) but **not** `FLAG_NOT_TOUCHABLE`, so taps on Kira and on the menu st
 
 1. Add the value to the `KiraEmotion` enum in `model/KiraEmotion.kt`.
 2. Give it a duration/eligibility entry in the `spec()` function right below it.
-3. Add a keyword rule (or reuse the punctuation fallback) in `emotion/EmotionEngine.kt`.
+3. Add a keyword/emoji rule (or reuse the punctuation fallback) in `emotion/EmotionEngine.kt`,
+   placed at the right priority position in the `rules` list.
 4. Add a `when` branch for its eyes/eyebrows/mouth in `ui/components/KiraAvatar.kt`'s
-   `drawKiraFace` — or just drop `assets/kira/<your_emotion>.png` (see below) and skip step 4
-   entirely.
+   `drawKiraFace`, and optionally an accent in `drawEmotionAccent` — or just drop
+   `assets/kira/emotions/<your_emotion>.png` (see below) and skip the face-drawing step entirely.
 
 Nothing else needs to change: the controller, overlay, and chat screen all switch on the enum
 generically.
@@ -197,20 +227,22 @@ generically.
 ## How to add a new animation
 
 Idle/interaction animations live in `KiraAvatar` (`ui/components/KiraAvatar.kt`), driven by
-`rememberInfiniteTransition` (sway, blink) and a one-shot `Animatable` (tap "pop"). To add a new
-animated behavior, branch on `emotion` the same way the existing `swayAmplitude`/`swayDurationMs`
-`when` blocks do, or add a new animated value alongside `sway`/`blink` and feed it into
-`drawKiraFace`.
+`rememberInfiniteTransition` (sway, blink), a one-shot `Animatable` (tap "pop"), and an
+`AnimatedContent` cross-fade between emotions. To add a new animated behavior, branch on
+`emotion` the same way the existing `swayAmplitude`/`swayDurationMs` `when` blocks do, or add a
+new animated value alongside `sway`/`blink` and feed it into `drawKiraFace`.
 
 ## Changing Kira's appearance
 
-Kira's look ships as **code** (a Compose `Canvas` drawing in `KiraFace`, `ui/components/KiraAvatar.kt`)
-rather than bundled bitmaps, so the app builds and runs with zero binary assets. To use your own
-hand-drawn or commissioned art instead:
+Kira's shipped look lives in `app/src/main/assets/kira/emotions/*.png` (14 circular avatar
+chips, one per emotion) with a Compose `Canvas` drawing (`KiraFace` in
+`ui/components/KiraAvatar.kt`) as the automatic fallback for any emotion whose file is missing —
+so the app always builds and runs even with zero art assets. To use your own art instead:
 
 1. Export each emotion as a PNG (see `app/src/main/assets/kira/README.md` for the full list and
-   naming convention, e.g. `happy.png`, `love.png`, `sleepy.png`).
-2. Drop the files into `app/src/main/assets/kira/`.
+   naming convention, e.g. `happy.png`, `love.png`, `sleepy.png`). Square, consistently framed
+   art works best since the UI displays it as a circular avatar.
+2. Drop the files into `app/src/main/assets/kira/emotions/`.
 3. Rebuild. `KiraImageProvider` picks up any file that exists there automatically and shows it
    instead of the built-in drawing — no code changes required. Emotions with no matching file
    keep using the built-in illustration, so you can override just a few at a time.
@@ -228,6 +260,6 @@ emotion classifier behind the existing `EmotionClassifier` interface.
 | `SYSTEM_ALERT_WINDOW` | Draw Kira's bubble over other apps. |
 | `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_SPECIAL_USE` | Keep the overlay alive reliably (Android 14+ requires a declared foreground service type). |
 | `POST_NOTIFICATIONS` | Only requested when you enable the "reply notifications" setting; shows the persistent low-priority overlay notice and optional chat-reply notices. |
-| `INTERNET` / `ACCESS_NETWORK_STATE` | Only used when you opt into the OpenAI provider, to call `api.openai.com` with your own key. |
+| `INTERNET` / `ACCESS_NETWORK_STATE` | Only used when you opt into Custom API mode, to call your configured endpoint with your own key. ChatGPT mode uses a plain `Intent.ACTION_VIEW`, which needs no permission. |
 
 No analytics, no ads, no third-party trackers.

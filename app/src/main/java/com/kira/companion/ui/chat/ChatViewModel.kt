@@ -6,14 +6,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kira.companion.KiraApplication
 import com.kira.companion.ai.AiProviderException
+import com.kira.companion.model.AiProviderType
 import com.kira.companion.model.ChatMessage
 import com.kira.companion.model.ChatRole
 import com.kira.companion.model.KiraEmotion
 import com.kira.companion.notifications.NotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -21,6 +24,8 @@ class ChatViewModel(private val app: KiraApplication) : ViewModel() {
 
     val messages: StateFlow<List<ChatMessage>> = app.chatHistoryStore.messages
     val emotion: StateFlow<KiraEmotion> = app.emotionController.emotion
+    val aiProvider: StateFlow<AiProviderType> = app.settingsRepository.aiProvider
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AiProviderType.CHATGPT)
 
     private val _isTyping = MutableStateFlow(false)
     val isTyping: StateFlow<Boolean> = _isTyping.asStateFlow()

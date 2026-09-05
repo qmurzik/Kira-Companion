@@ -23,23 +23,18 @@ class SettingsViewModel(private val app: KiraApplication) : ViewModel() {
         flow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initial)
 
     val overlayEnabled = stateOf(app.settingsRepository.overlayEnabled, false)
-    val randomReactionsEnabled = stateOf(app.settingsRepository.randomReactionsEnabled, true)
     val reactionFrequency = stateOf(app.settingsRepository.reactionFrequency, ReactionFrequency.NORMAL)
     val kiraSize = stateOf(app.settingsRepository.kiraSize, KiraSize.MEDIUM)
     val soundEnabled = stateOf(app.settingsRepository.soundEnabled, true)
     val notificationsEnabled = stateOf(app.settingsRepository.notificationsEnabled, true)
     val theme = stateOf(app.settingsRepository.theme, AppTheme.SYSTEM)
-    val aiProvider = stateOf(app.settingsRepository.aiProvider, AiProviderType.MOCK)
+    val aiProvider = stateOf(app.settingsRepository.aiProvider, AiProviderType.CHATGPT)
 
     private val _apiKey = MutableStateFlow(app.secureKeyStore.getOpenAiApiKey())
     val apiKey: StateFlow<String> = _apiKey.asStateFlow()
 
     fun setOverlayEnabled(context: Context, enabled: Boolean) {
         viewModelScope.launch { OverlayControl.setEnabled(context, app, enabled) }
-    }
-
-    fun setRandomReactionsEnabled(enabled: Boolean) {
-        viewModelScope.launch { app.settingsRepository.setRandomReactionsEnabled(enabled) }
     }
 
     fun setReactionFrequency(frequency: ReactionFrequency) {

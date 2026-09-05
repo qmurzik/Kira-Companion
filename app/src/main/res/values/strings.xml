@@ -27,8 +27,8 @@
     <string name="permission_back">Я уже разрешил(а)</string>
 
     <!-- Overlay menu -->
-    <string name="menu_chat">Чат</string>
-    <string name="menu_emotions">Эмоции</string>
+    <string name="menu_chat">Открыть ChatGPT</string>
+    <string name="menu_emotions">Эмоция</string>
     <string name="menu_settings">Настройки</string>
     <string name="menu_hide">Скрыть Киру</string>
     <string name="menu_close">Закрыть приложение</string>
@@ -41,15 +41,18 @@
     <string name="chat_clear_history">Очистить историю</string>
     <string name="chat_clear_history_confirm">Удалить всю историю переписки с Кирой?</string>
     <string name="chat_empty_state">Скажи Кире привет 👋</string>
+    <string name="chat_via_chatgpt_title">AI-чат: используется через ChatGPT</string>
+    <string name="chat_via_chatgpt_explanation">Кира сама умеет двигаться, показывать эмоции и жить поверх других приложений полностью без интернета. Для настоящего AI-диалога открой официальное приложение или сайт ChatGPT — без входа в аккаунт и без API-ключа с этой стороны.</string>
+    <string name="chat_open_chatgpt">Открыть ChatGPT</string>
     <string name="cancel">Отмена</string>
     <string name="confirm">Удалить</string>
+    <string name="action_save">Сохранить</string>
 
     <!-- Settings -->
     <string name="settings_title">Настройки</string>
     <string name="settings_section_overlay">Кира на экране</string>
     <string name="settings_overlay_enabled">Показывать Киру поверх приложений</string>
-    <string name="settings_random_reactions">Случайные реакции</string>
-    <string name="settings_reaction_frequency">Частота реакций</string>
+    <string name="settings_reaction_frequency">Случайные реакции</string>
     <string name="settings_kira_size">Размер Киры</string>
     <string name="settings_section_general">Общие</string>
     <string name="settings_sound">Звук</string>
@@ -57,7 +60,8 @@
     <string name="settings_theme">Тема оформления</string>
     <string name="settings_section_ai">Настройка ИИ</string>
     <string name="settings_ai_provider">Источник ответов</string>
-    <string name="settings_api_key">API-ключ OpenAI</string>
+    <string name="settings_chatgpt_explanation">Кира просто откроет официальное приложение или сайт ChatGPT, когда ты захочешь поговорить с настоящим ИИ. Никакой вход в аккаунт, cookies или токены сессии этим приложением не запрашиваются и не читаются.</string>
+    <string name="settings_api_key">API-ключ (OpenAI-совместимый)</string>
     <string name="settings_api_key_hint">sk-…</string>
     <string name="settings_api_key_warning">API-ключ хранится только на этом устройстве в зашифрованном хранилище и никогда не передаётся никуда, кроме выбранного тобой AI-сервиса. Для продакшена рекомендуется использовать собственный сервер-прокси, чтобы ключ вообще не попадал на телефон пользователя.</string>
     <string name="settings_section_data">Данные</string>
@@ -68,14 +72,16 @@
     <string name="size_small">Маленький</string>
     <string name="size_medium">Средний</string>
     <string name="size_large">Большой</string>
+    <string name="frequency_off">Выкл</string>
     <string name="frequency_low">Редко</string>
     <string name="frequency_normal">Обычно</string>
     <string name="frequency_high">Часто</string>
     <string name="theme_system">Как в системе</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
-    <string name="provider_mock">Демо-ответы (без интернета)</string>
-    <string name="provider_openai">OpenAI</string>
+    <string name="provider_chatgpt">ChatGPT</string>
+    <string name="provider_local_demo">Локальное демо</string>
+    <string name="provider_custom_api">Свой API</string>
 
     <string name="content_desc_kira">Кира</string>
 </resources>

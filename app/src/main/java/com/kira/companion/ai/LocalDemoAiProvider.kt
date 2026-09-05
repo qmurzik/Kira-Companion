@@ -5,14 +5,15 @@ import com.kira.companion.model.KiraEmotion
 import kotlinx.coroutines.delay
 
 /**
- * Offline fallback so the app is fully usable without any API key or network access.
- * Picks a friendly, on-brand reply based on the same rule-based sentiment read used
- * by the emotion engine, with a short simulated "typing" delay.
+ * Fully offline reply generator so the whole app - chat UI, history, and the emotion
+ * engine reacting to Kira's own "replies" - can be tried and tested with zero setup,
+ * no network access and no API key of any kind. This is what the app uses whenever the
+ * user hasn't opted into a real backend; it is not meant to be a serious AI.
  */
-class MockAiProvider : AiProvider {
+class LocalDemoAiProvider : AiProvider {
 
     override suspend fun sendMessage(message: String, history: List<Pair<Boolean, String>>): String {
-        delay(600L + (0..700L).random())
+        delay(500L + (0..600L).random())
 
         val emotion = EmotionEngine.classify(message, KiraEmotion.IDLE)
         val bank = responses[emotion] ?: responses.getValue(KiraEmotion.IDLE)
@@ -25,16 +26,28 @@ class MockAiProvider : AiProvider {
                 "Привет! Я так рада, что ты заглянул(а) 💜",
                 "Хей! Как твои дела сегодня?",
                 "Ура, ты тут! Расскажи, как прошёл день?",
+                "Привет! ♡",
+                "Я здесь~",
+                "Хихи, рада тебя видеть!",
             ),
             KiraEmotion.LOVE to listOf(
                 "Ты тоже мне очень дорог(а) 💕",
                 "От твоих слов у меня прямо тепло на душе.",
                 "Спасибо, мне очень приятно это слышать!",
+                "У меня всё хорошо 💜",
+            ),
+            KiraEmotion.SHY to listOf(
+                "Ой... не говори так, я сейчас засмущаюсь~",
+                "Хи, спасибо... мне немного неловко от комплиментов.",
             ),
             KiraEmotion.SAD to listOf(
                 "Мне жаль, что тебе грустно. Я рядом, если хочешь поговорить об этом.",
                 "Обнимаю тебя мысленно. Что случилось?",
                 "Иногда просто нужно выговориться — я слушаю.",
+            ),
+            KiraEmotion.CRYING to listOf(
+                "Мне очень жаль... иди сюда, я обниму тебя (мысленно) 🤍",
+                "Всё будет хорошо. Расскажи мне, что случилось?",
             ),
             KiraEmotion.ANGRY to listOf(
                 "Понимаю, это правда раздражает. Хочешь рассказать подробнее?",
@@ -51,6 +64,14 @@ class MockAiProvider : AiProvider {
             KiraEmotion.THINKING to listOf(
                 "Хм, дай мне подумать над этим секундочку…",
                 "Интересный вопрос. Сейчас соображу.",
+            ),
+            KiraEmotion.WINK to listOf(
+                "Хи-хи, а вот и секрет~ 😉",
+                "Ну ты и шутник(ца)!",
+            ),
+            KiraEmotion.LAUGHING to listOf(
+                "Ахаха, вот это ты сказал(а)!",
+                "Хихи, очень смешно!",
             ),
             KiraEmotion.CONFUSED to listOf(
                 "Хм, кажется, я не совсем поняла. Можешь объяснить иначе?",

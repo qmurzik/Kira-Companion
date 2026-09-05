@@ -1,5 +1,6 @@
 package com.kira.companion.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -10,11 +11,17 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -43,10 +52,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Full Kira avatar: tries user-supplied artwork first (see [KiraImageProvider]),
- * otherwise renders the built-in animated [KiraFace]. Handles idle sway/blink and a
- * short "pop" animation whenever the emotion changes away from IDLE (covers taps,
- * chat reactions and random reactions with a single, simple rule).
+ * Full Kira avatar: tries the shipped/user-supplied artwork first (see [KiraImageProvider]),
+ * otherwise renders the built-in animated [KiraFace]. Handles idle sway/blink, a short "pop"
+ * animation whenever the emotion changes away from IDLE, a smooth cross-fade between
+ * emotions (never an instant image swap), and a small always-on accent layer (hearts,
+ * tears, "Zzz", "!", "...") drawn on top regardless of whether the face itself is a photo
+ * or the procedural drawing.
  */
 @Composable
 fun KiraAvatar(
@@ -55,10 +66,6 @@ fun KiraAvatar(
     sizeDp: Dp = 96.dp,
 ) {
     val context = LocalContext.current
-    var overrideBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(emotion) {
-        overrideBitmap = KiraImageProvider.loadOverrideBitmap(context, emotion)
-    }
 
     val scale = remember { androidx.compose.animation.core.Animatable(1f) }
     LaunchedEffect(emotion) {
@@ -107,19 +114,38 @@ fun KiraAvatar(
             .graphicsLayer(scaleX = scale.value, scaleY = scale.value, rotationZ = sway),
         contentAlignment = Alignment.Center,
     ) {
-        val bitmap = overrideBitmap
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap,
-                contentDescription = stringResource(R.string.content_desc_kira),
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            KiraFace(
-                emotion = emotion,
-                eyeOpenness = if (emotion == KiraEmotion.SLEEPY) 0.08f else blink,
-                modifier = Modifier.fillMaxSize(),
-            )
+        AnimatedContent(
+            targetState = emotion,
+            transitionSpec = {
+                (fadeIn(tween(220)) + scaleIn(tween(220), initialScale = 0.88f))
+                    .togetherWith(fadeOut(tween(160)) + scaleOut(tween(160), targetScale = 1.06f))
+            },
+            label = "kira-emotion-crossfade",
+        ) { targetEmotion ->
+            var bitmap by remember(targetEmotion) { mutableStateOf<ImageBitmap?>(null) }
+            LaunchedEffect(targetEmotion) {
+                bitmap = KiraImageProvider.loadOverrideBitmap(context, targetEmotion)
+            }
+            val currentBitmap = bitmap
+            if (currentBitmap != null) {
+                Image(
+                    bitmap = currentBitmap,
+                    contentDescription = stringResource(R.string.content_desc_kira),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                )
+            } else {
+                KiraFace(
+                    emotion = targetEmotion,
+                    eyeOpenness = if (targetEmotion == KiraEmotion.SLEEPY) 0.08f else blink,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawEmotionAccent(emotion)
         }
     }
 }
@@ -251,46 +277,44 @@ private fun DrawScope.drawKiraFace(emotion: KiraEmotion, eyeOpenness: Float) {
             openEye(leftEye)
             openEye(rightEye)
         }
-        KiraEmotion.HAPPY -> {
+        KiraEmotion.HAPPY, KiraEmotion.EXCITED, KiraEmotion.LAUGHING -> {
             closedEye(leftEye)
             closedEye(rightEye)
-        }
-        KiraEmotion.EXCITED -> {
-            closedEye(leftEye)
-            closedEye(rightEye)
-            drawSparkle(Offset(x(26f), y(30f)), 4.5f * s, AccentPink)
-            drawSparkle(Offset(x(84f), y(28f)), 3.5f * s, AccentPink)
         }
         KiraEmotion.SAD -> {
             openEye(leftEye)
             openEye(rightEye)
             eyebrow(leftEye, 20f)
             eyebrow(rightEye, 160f)
-            drawDroplet(Offset(x(46f), y(67f)), 3f * s, TearBlue)
+        }
+        KiraEmotion.CRYING -> {
+            closedEye(leftEye)
+            closedEye(rightEye)
+            eyebrow(leftEye, 20f)
+            eyebrow(rightEye, 160f)
         }
         KiraEmotion.ANGRY -> {
             openEye(leftEye)
             openEye(rightEye)
             eyebrow(leftEye, 160f)
             eyebrow(rightEye, 20f)
-            drawAngerMark(Offset(x(76f), y(42f)), 5f * s, AngerRed)
         }
         KiraEmotion.SLEEPY -> {
             closedEye(leftEye)
             closedEye(rightEye)
-            drawZzz(Offset(x(80f), y(34f)), s)
         }
         KiraEmotion.CONFUSED -> {
             openEye(leftEye, pupilShiftX = 1f)
             openEye(rightEye, pupilShiftX = 1f)
             eyebrow(leftEye, 10f)
-            drawDroplet(Offset(x(76f), y(46f)), 4f * s, TearBlue)
+        }
+        KiraEmotion.SHY -> {
+            openEye(leftEye, pupilShiftX = -1f)
+            openEye(rightEye, pupilShiftX = -1f)
         }
         KiraEmotion.LOVE -> {
             heartEye(leftEye)
             heartEye(rightEye)
-            drawCircle(color = BlushColor, radius = 6f * s, center = Offset(x(37f), y(68f)))
-            drawCircle(color = BlushColor, radius = 6f * s, center = Offset(x(71f), y(68f)))
         }
         KiraEmotion.SURPRISED -> {
             openEye(leftEye)
@@ -301,7 +325,10 @@ private fun DrawScope.drawKiraFace(emotion: KiraEmotion, eyeOpenness: Float) {
         KiraEmotion.THINKING -> {
             openEye(leftEye, pupilShiftX = 1f)
             openEye(rightEye, pupilShiftX = 1f)
-            drawDots(Offset(x(78f), y(38f)), s)
+        }
+        KiraEmotion.WINK -> {
+            closedEye(leftEye)
+            openEye(rightEye)
         }
     }
 
@@ -312,11 +339,11 @@ private fun DrawScope.drawKiraFace(emotion: KiraEmotion, eyeOpenness: Float) {
             mouthPath.moveTo(x(46f), y(71f))
             mouthPath.quadraticTo(x(54f), y(78f), x(62f), y(71f))
         }
-        KiraEmotion.EXCITED -> {
+        KiraEmotion.EXCITED, KiraEmotion.LAUGHING -> {
             drawOval(color = MouthColor, topLeft = Offset(x(48f), y(70f)), size = Size(12f * s, 9f * s))
             drawStrokedMouth = false
         }
-        KiraEmotion.SAD -> {
+        KiraEmotion.SAD, KiraEmotion.CRYING -> {
             mouthPath.moveTo(x(47f), y(76f))
             mouthPath.quadraticTo(x(54f), y(70f), x(61f), y(76f))
         }
@@ -339,6 +366,47 @@ private fun DrawScope.drawKiraFace(emotion: KiraEmotion, eyeOpenness: Float) {
             color = MouthColor,
             style = Stroke(width = 2.6f * s, cap = StrokeCap.Round),
         )
+    }
+}
+
+/**
+ * Small floating accents (hearts, tears, "Zzz", "!", "...") drawn on top of whichever face
+ * is showing - the shipped artwork or the procedural [KiraFace] alike - so the emotion
+ * always reads clearly regardless of the underlying art.
+ */
+private fun DrawScope.drawEmotionAccent(emotion: KiraEmotion) {
+    val s = size.minDimension / 108f
+    val ox = (size.width - 108f * s) / 2f
+    val oy = (size.height - 108f * s) / 2f
+    fun x(v: Float) = ox + v * s
+    fun y(v: Float) = oy + v * s
+
+    when (emotion) {
+        KiraEmotion.EXCITED -> {
+            drawSparkle(Offset(x(26f), y(30f)), 4.5f * s, AccentPink)
+            drawSparkle(Offset(x(84f), y(28f)), 3.5f * s, AccentPink)
+        }
+        KiraEmotion.SAD -> drawDroplet(Offset(x(46f), y(67f)), 3f * s, TearBlue)
+        KiraEmotion.CRYING -> {
+            drawDroplet(Offset(x(42f), y(68f)), 3.6f * s, TearBlue)
+            drawDroplet(Offset(x(66f), y(68f)), 3.6f * s, TearBlue)
+        }
+        KiraEmotion.ANGRY -> drawAngerMark(Offset(x(76f), y(42f)), 5f * s, AngerRed)
+        KiraEmotion.SLEEPY -> drawZzz(Offset(x(80f), y(34f)), s)
+        KiraEmotion.CONFUSED -> drawDroplet(Offset(x(76f), y(46f)), 4f * s, TearBlue)
+        KiraEmotion.LOVE -> {
+            drawHeartFloat(Offset(x(80f), y(28f)), 6f * s, AccentPink)
+            drawCircle(color = BlushColor, radius = 6f * s, center = Offset(x(37f), y(68f)))
+            drawCircle(color = BlushColor, radius = 6f * s, center = Offset(x(71f), y(68f)))
+        }
+        KiraEmotion.SHY -> {
+            drawCircle(color = BlushColor, radius = 7f * s, center = Offset(x(37f), y(68f)))
+            drawCircle(color = BlushColor, radius = 7f * s, center = Offset(x(71f), y(68f)))
+        }
+        KiraEmotion.THINKING -> drawDots(Offset(x(78f), y(38f)), s)
+        KiraEmotion.SURPRISED -> drawExclaim(Offset(x(80f), y(32f)), 5f * s, HairColor)
+        KiraEmotion.WINK -> drawHeartFloat(Offset(x(78f), y(30f)), 5f * s, AccentPink)
+        KiraEmotion.IDLE, KiraEmotion.HAPPY, KiraEmotion.LAUGHING -> Unit
     }
 }
 
@@ -375,4 +443,26 @@ private fun DrawScope.drawDots(anchor: Offset, s: Float) {
     for (i in 0..2) {
         drawCircle(color = color, radius = 1.6f * s, center = Offset(anchor.x + i * 5f * s, anchor.y))
     }
+}
+
+private fun DrawScope.drawExclaim(center: Offset, r: Float, color: Color) {
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(center.x - r * 0.18f, center.y - r * 1.3f),
+        size = Size(r * 0.36f, r * 1.6f),
+        cornerRadius = CornerRadius(r * 0.18f, r * 0.18f),
+    )
+    drawCircle(color = color, radius = r * 0.22f, center = Offset(center.x, center.y + r * 0.55f))
+}
+
+private fun DrawScope.drawHeartFloat(center: Offset, r: Float, color: Color) {
+    drawCircle(color = color, radius = r * 0.55f, center = Offset(center.x - r * 0.5f, center.y))
+    drawCircle(color = color, radius = r * 0.55f, center = Offset(center.x + r * 0.5f, center.y))
+    val path = Path().apply {
+        moveTo(center.x - r * 1.05f, center.y + r * 0.05f)
+        lineTo(center.x + r * 1.05f, center.y + r * 0.05f)
+        lineTo(center.x, center.y + r * 1.1f)
+        close()
+    }
+    drawPath(path, color = color)
 }

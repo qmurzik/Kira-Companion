@@ -55,7 +55,6 @@ fun SettingsScreen() {
     val viewModel: SettingsViewModel = viewModel(factory = KiraViewModelFactory(app))
 
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
-    val randomReactionsEnabled by viewModel.randomReactionsEnabled.collectAsStateWithLifecycle()
     val reactionFrequency by viewModel.reactionFrequency.collectAsStateWithLifecycle()
     val kiraSize by viewModel.kiraSize.collectAsStateWithLifecycle()
     val soundEnabled by viewModel.soundEnabled.collectAsStateWithLifecycle()
@@ -89,18 +88,13 @@ fun SettingsScreen() {
         Spacer(modifier = Modifier.height(20.dp))
         SectionTitle(stringResource(R.string.settings_section_general))
         SettingsCard {
-            SwitchRow(
-                label = stringResource(R.string.settings_random_reactions),
-                checked = randomReactionsEnabled,
-                onCheckedChange = viewModel::setRandomReactionsEnabled,
-            )
-            HorizontalDivider()
             LabeledRow(stringResource(R.string.settings_reaction_frequency)) {
                 ChipSelector(
                     options = ReactionFrequency.entries,
                     selected = reactionFrequency,
                     label = {
                         when (it) {
+                            ReactionFrequency.OFF -> stringResource(R.string.frequency_off)
                             ReactionFrequency.LOW -> stringResource(R.string.frequency_low)
                             ReactionFrequency.NORMAL -> stringResource(R.string.frequency_normal)
                             ReactionFrequency.HIGH -> stringResource(R.string.frequency_high)
@@ -167,14 +161,25 @@ fun SettingsScreen() {
                     selected = aiProvider,
                     label = {
                         when (it) {
-                            AiProviderType.MOCK -> stringResource(R.string.provider_mock)
-                            AiProviderType.OPENAI -> stringResource(R.string.provider_openai)
+                            AiProviderType.CHATGPT -> stringResource(R.string.provider_chatgpt)
+                            AiProviderType.LOCAL_DEMO -> stringResource(R.string.provider_local_demo)
+                            AiProviderType.CUSTOM_API -> stringResource(R.string.provider_custom_api)
                         }
                     },
                     onSelect = viewModel::setAiProvider,
                 )
             }
-            if (aiProvider == AiProviderType.OPENAI) {
+            if (aiProvider == AiProviderType.CHATGPT) {
+                HorizontalDivider()
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.settings_chatgpt_explanation),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (aiProvider == AiProviderType.CUSTOM_API) {
                 HorizontalDivider()
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(text = stringResource(R.string.settings_api_key), style = MaterialTheme.typography.titleMedium)
@@ -191,7 +196,7 @@ fun SettingsScreen() {
                     OutlinedButton(
                         onClick = { viewModel.setApiKey(apiKeyInput) },
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.confirm)) }
+                    ) { Text(stringResource(R.string.action_save)) }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.settings_api_key_warning),

@@ -26,7 +26,6 @@ class SettingsRepository(private val context: Context) {
 
     private object Keys {
         val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
-        val RANDOM_REACTIONS_ENABLED = booleanPreferencesKey("random_reactions_enabled")
         val REACTION_FREQUENCY = stringPreferencesKey("reaction_frequency")
         val KIRA_SIZE = stringPreferencesKey("kira_size")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
@@ -42,13 +41,6 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setOverlayEnabled(enabled: Boolean) {
         context.dataStore.edit { it[Keys.OVERLAY_ENABLED] = enabled }
-    }
-
-    val randomReactionsEnabled: Flow<Boolean> =
-        context.dataStore.data.map { it[Keys.RANDOM_REACTIONS_ENABLED] ?: true }
-
-    suspend fun setRandomReactionsEnabled(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.RANDOM_REACTIONS_ENABLED] = enabled }
     }
 
     val reactionFrequency: Flow<ReactionFrequency> = context.dataStore.data.map {
@@ -89,7 +81,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     val aiProvider: Flow<AiProviderType> = context.dataStore.data.map {
-        it[Keys.AI_PROVIDER]?.let { name -> enumOrNull<AiProviderType>(name) } ?: AiProviderType.MOCK
+        it[Keys.AI_PROVIDER]?.let { name -> enumOrNull<AiProviderType>(name) } ?: AiProviderType.CHATGPT
     }
 
     suspend fun setAiProvider(provider: AiProviderType) {

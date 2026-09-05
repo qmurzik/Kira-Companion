@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -65,10 +64,14 @@ class EmotionController(private val scope: CoroutineScope) {
         setEmotion(KiraEmotion.THINKING)
     }
 
-    /** A short, low-effort reaction fired when the user simply taps Kira. */
+    /**
+     * A short, low-effort reaction fired when the user simply taps Kira: a small random
+     * cute reaction that always fades back to IDLE - it never leaves Kira in a new
+     * permanent state. Only fires when she's currently doing nothing else.
+     */
     fun onTap() {
         if (_emotion.value == KiraEmotion.IDLE) {
-            setEmotion(KiraEmotion.HAPPY)
+            setEmotion(TAP_REACTIONS.random())
         }
     }
 
@@ -80,9 +83,14 @@ class EmotionController(private val scope: CoroutineScope) {
             setEmotion(candidates.random())
         }
     }
+
+    private companion object {
+        val TAP_REACTIONS = listOf(KiraEmotion.HAPPY, KiraEmotion.WINK, KiraEmotion.LOVE)
+    }
 }
 
-private fun ReactionFrequency.intervalRangeMillis(): LongRange = when (this) {
+private fun ReactionFrequency.intervalRangeMillisOrNull(): LongRange? = when (this) {
+    ReactionFrequency.OFF -> null
     ReactionFrequency.LOW -> 4 * 60_000L..8 * 60_000L
     ReactionFrequency.NORMAL -> 2 * 60_000L..4 * 60_000L
     ReactionFrequency.HIGH -> 45_000L..90_000L
@@ -90,20 +98,20 @@ private fun ReactionFrequency.intervalRangeMillis(): LongRange = when (this) {
 
 /**
  * Launches a loop that periodically asks [controller] to attempt a random reaction,
- * respecting the live "enabled" and "frequency" settings. Cancel the returned [Job]
- * (or the parent scope) to stop it, e.g. when the overlay service is destroyed.
+ * respecting the live "frequency" setting (OFF pauses the loop entirely, without any
+ * busy-polling - it just suspends on the settings [Flow] until frequency changes again).
+ * Cancel the returned [Job] (or the parent scope) to stop it, e.g. when the overlay
+ * service is destroyed.
  */
 fun CoroutineScope.startRandomReactionLoop(
     controller: EmotionController,
-    enabledFlow: Flow<Boolean>,
     frequencyFlow: Flow<ReactionFrequency>,
 ): Job = launch {
-    combine(enabledFlow, frequencyFlow) { enabled, frequency -> enabled to frequency }
-        .collectLatest { (enabled, frequency) ->
-            if (!enabled) return@collectLatest
-            while (isActive) {
-                delay(frequency.intervalRangeMillis().random())
-                controller.triggerRandomReaction()
-            }
+    frequencyFlow.collectLatest { frequency ->
+        val range = frequency.intervalRangeMillisOrNull() ?: return@collectLatest
+        while (isActive) {
+            delay(range.random())
+            controller.triggerRandomReaction()
         }
+    }
 }

@@ -44,10 +44,10 @@ class EmotionControllerTest {
     }
 
     @Test
-    fun `onTap reacts with happy when idle`() = runTest {
+    fun `onTap reacts with a cute reaction when idle`() = runTest {
         val controller = EmotionController(this)
         controller.onTap()
-        assertEquals(KiraEmotion.HAPPY, controller.emotion.value)
+        assertTrue(controller.emotion.value in listOf(KiraEmotion.HAPPY, KiraEmotion.WINK, KiraEmotion.LOVE))
     }
 
     @Test

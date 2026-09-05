@@ -12,13 +12,33 @@ class EmotionEngineTest {
     }
 
     @Test
+    fun `how are you is happy`() {
+        assertEquals(KiraEmotion.HAPPY, EmotionEngine.classify("как дела?", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `thanks is happy`() {
+        assertEquals(KiraEmotion.HAPPY, EmotionEngine.classify("спасибо", KiraEmotion.IDLE))
+    }
+
+    @Test
     fun `love phrase is love`() {
         assertEquals(KiraEmotion.LOVE, EmotionEngine.classify("я тебя люблю", KiraEmotion.IDLE))
     }
 
     @Test
+    fun `compliment about kira is shy`() {
+        assertEquals(KiraEmotion.SHY, EmotionEngine.classify("ты такая милая", KiraEmotion.IDLE))
+    }
+
+    @Test
     fun `sadness keyword is sad`() {
         assertEquals(KiraEmotion.SAD, EmotionEngine.classify("мне сегодня грустно", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `severe sadness phrase is crying`() {
+        assertEquals(KiraEmotion.CRYING, EmotionEngine.classify("мне очень плохо", KiraEmotion.IDLE))
     }
 
     @Test
@@ -28,7 +48,12 @@ class EmotionEngineTest {
 
     @Test
     fun `question about an object is confused`() {
-        assertEquals(KiraEmotion.CONFUSED, EmotionEngine.classify("что это?", KiraEmotion.IDLE))
+        assertEquals(KiraEmotion.CONFUSED, EmotionEngine.classify("что это вообще?!", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `not understanding is confused`() {
+        assertEquals(KiraEmotion.CONFUSED, EmotionEngine.classify("не понимаю", KiraEmotion.IDLE))
     }
 
     @Test
@@ -38,7 +63,7 @@ class EmotionEngineTest {
 
     @Test
     fun `shouted wow is surprised`() {
-        assertEquals(KiraEmotion.SURPRISED, EmotionEngine.classify("ВАУ", KiraEmotion.IDLE))
+        assertEquals(KiraEmotion.SURPRISED, EmotionEngine.classify("ВАУ!!!", KiraEmotion.IDLE))
     }
 
     @Test
@@ -48,7 +73,12 @@ class EmotionEngineTest {
 
     @Test
     fun `angry keyword is angry`() {
-        assertEquals(KiraEmotion.ANGRY, EmotionEngine.classify("меня это бесит", KiraEmotion.IDLE))
+        assertEquals(KiraEmotion.ANGRY, EmotionEngine.classify("это бесит", KiraEmotion.IDLE))
+    }
+
+    @Test
+    fun `repeated ha is laughing`() {
+        assertEquals(KiraEmotion.LAUGHING, EmotionEngine.classify("ахахаха", KiraEmotion.IDLE))
     }
 
     @Test
@@ -67,8 +97,9 @@ class EmotionEngineTest {
     }
 
     @Test
-    fun `plain statement defaults to happy`() {
-        assertEquals(KiraEmotion.HAPPY, EmotionEngine.classify("просто обычный текст", KiraEmotion.IDLE))
+    fun `plain statement keeps previous emotion`() {
+        assertEquals(KiraEmotion.IDLE, EmotionEngine.classify("просто обычный текст", KiraEmotion.IDLE))
+        assertEquals(KiraEmotion.HAPPY, EmotionEngine.classify("просто обычный текст", KiraEmotion.HAPPY))
     }
 
     @Test

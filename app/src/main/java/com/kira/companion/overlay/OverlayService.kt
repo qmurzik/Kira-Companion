@@ -21,6 +21,7 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.kira.companion.KiraApplication
 import com.kira.companion.MainActivity
+import com.kira.companion.ai.openChatGpt
 import com.kira.companion.emotion.startRandomReactionLoop
 import com.kira.companion.model.KiraEmotion
 import com.kira.companion.model.KiraPosition
@@ -89,7 +90,6 @@ class OverlayService : Service() {
 
         serviceScope.startRandomReactionLoop(
             controller = app.emotionController,
-            enabledFlow = app.settingsRepository.randomReactionsEnabled,
             frequencyFlow = app.settingsRepository.reactionFrequency,
         )
     }
@@ -242,7 +242,7 @@ class OverlayService : Service() {
                 OverlayMenuOverlay(
                     anchorOffsetPx = anchorOffset,
                     onDismiss = ::closeMenu,
-                    onChat = { closeMenu(); openAppScreen(MainActivity.EXTRA_OPEN_CHAT) },
+                    onChat = { closeMenu(); openChatGpt(this@OverlayService) },
                     onEmotions = { closeMenu(); cycleDebugEmotion() },
                     onSettings = { closeMenu(); openAppScreen(MainActivity.EXTRA_OPEN_SETTINGS) },
                     onHide = { closeMenu(); hideOverlay() },

@@ -1,40 +1,42 @@
 # Kira art assets
 
-This folder is where you can drop **your own hand-drawn or commissioned artwork**
-for Kira to replace the built-in vector illustration.
-
-At runtime `KiraImageProvider` (see `image/KiraImageProvider.kt`) looks here first:
+`emotions/` holds the artwork shown for each of Kira's expressions, one PNG per
+[`KiraEmotion`](../../java/com/kira/companion/model/KiraEmotion.kt) value:
 
 ```
-assets/kira/idle.png
-assets/kira/happy.png
-assets/kira/sad.png
-assets/kira/thinking.png
-assets/kira/surprised.png
-assets/kira/angry.png
-assets/kira/sleepy.png
-assets/kira/confused.png
-assets/kira/love.png
-assets/kira/excited.png
+assets/kira/emotions/idle.png
+assets/kira/emotions/happy.png
+assets/kira/emotions/love.png
+assets/kira/emotions/shy.png
+assets/kira/emotions/thinking.png
+assets/kira/emotions/surprised.png
+assets/kira/emotions/sad.png
+assets/kira/emotions/angry.png
+assets/kira/emotions/sleepy.png
+assets/kira/emotions/excited.png
+assets/kira/emotions/confused.png
+assets/kira/emotions/wink.png
+assets/kira/emotions/laughing.png
+assets/kira/emotions/crying.png
 ```
 
-If a file for the current emotion exists, it is decoded and shown instead of the
-built-in procedural face. If it is missing (the default state of this repo, since
-we ship no binary art), Kira automatically falls back to `KiraFace`, a
-Jetpack Compose `Canvas` drawing that renders a simple, cute, non-explicit anime
-face (short black hair, purple eyes, soft expressions) per emotion — so the app
-always builds and runs even without real artwork.
+At runtime `KiraImageProvider` (see `image/KiraImageProvider.kt`) looks here first. If a
+file for the current emotion exists, it is decoded and shown (cropped to a soft circular
+"avatar" chip by the UI). If it is missing, Kira automatically falls back to `KiraFace`, a
+Jetpack Compose `Canvas` drawing that renders a simple, cute, non-explicit anime face - so
+the app always builds and runs even without any bundled artwork.
 
-## Recommended format
+## Where the shipped art came from
 
-- PNG with transparency, square, at least 512x512.
-- Consistent framing/proportions across all 10 files so switching between
-  emotions doesn't "jump" the character around.
-- Keep the style cute and friendly (no explicit/sexualized content).
+The bundled PNGs started as a 14-pose reference sheet (short black hair, purple eyes, one
+consistent character) and were each cropped to a matching circular frame with a soft
+feathered edge, sized identically, so switching between emotions doesn't jump or stretch.
 
-## Adding a new emotion image
+## Adding/replacing an emotion's artwork
 
 1. Export your art as `<emotion_name>.png` using the lowercase enum name from
    `KiraEmotion` (e.g. `love.png` for `KiraEmotion.LOVE`).
-2. Drop it in this folder.
-3. Rebuild the app. No code changes required.
+2. Keep it square and consistently framed with the existing set (a face/bust crop works
+   best - the UI displays it as a circular avatar).
+3. Drop it in `assets/kira/emotions/`.
+4. Rebuild. No code changes required.

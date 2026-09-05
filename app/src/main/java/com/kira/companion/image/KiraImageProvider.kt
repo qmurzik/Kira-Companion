@@ -10,18 +10,18 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 /**
- * Looks for user-supplied artwork under assets/kira/<emotion>.png and decodes it if
- * present. Returns null when no override art exists, so callers fall back to the
- * built-in procedural [com.kira.companion.ui.components.KiraFace] drawing.
+ * Looks for the shipped (or user-replaceable) artwork under assets/kira/emotions/<emotion>.png
+ * and decodes it if present. Returns null when no art exists for that emotion, so callers
+ * fall back to the built-in procedural [com.kira.companion.ui.components.KiraFace] drawing.
  *
- * This is the whole "asset swap system": drop a PNG in assets/kira/ named after the
- * lowercase enum value and it's picked up automatically, no code changes required.
+ * This is the whole "asset swap system": drop a PNG in assets/kira/emotions/ named after
+ * the lowercase enum value and it's picked up automatically, no code changes required.
  */
 object KiraImageProvider {
 
     suspend fun loadOverrideBitmap(context: Context, emotion: KiraEmotion): ImageBitmap? =
         withContext(Dispatchers.IO) {
-            val fileName = "kira/${emotion.name.lowercase(Locale.ROOT)}.png"
+            val fileName = "kira/emotions/${emotion.name.lowercase(Locale.ROOT)}.png"
             runCatching {
                 context.assets.open(fileName).use { stream ->
                     BitmapFactory.decodeStream(stream)?.asImageBitmap()
