@@ -22,7 +22,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.kira.companion.KiraApplication
 import com.kira.companion.MainActivity
 import com.kira.companion.ai.openChatGpt
-import com.kira.companion.emotion.startRandomReactionLoop
+import com.kira.companion.behavior.TouchRegion
 import com.kira.companion.model.KiraEmotion
 import com.kira.companion.model.KiraPosition
 import com.kira.companion.model.KiraSize
@@ -60,7 +60,6 @@ class OverlayService : Service() {
     private var menuView: ComposeView? = null
     private var menuParams: WindowManager.LayoutParams? = null
 
-    private var emotionState by mutableStateOf(KiraEmotion.default)
     private var bubbleSizeDpState by mutableStateOf(96f)
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -85,13 +84,10 @@ class OverlayService : Service() {
         }
 
         serviceScope.launch {
-            app.emotionController.emotion.collect { emotionState = it }
+            app.settingsRepository.reactionFrequency.collect { frequency ->
+                app.behaviorController.setRandomBehaviorFrequency(frequency)
+            }
         }
-
-        serviceScope.startRandomReactionLoop(
-            controller = app.emotionController,
-            frequencyFlow = app.settingsRepository.reactionFrequency,
-        )
     }
 
     private fun startForegroundWithNotification() {
@@ -144,7 +140,8 @@ class OverlayService : Service() {
             setViewTreeSavedStateRegistryOwner(overlayLifecycleOwner)
             setContent {
                 OverlayBubble(
-                    emotion = emotionState,
+                    modelStatusRepository = app.modelStatusRepository,
+                    behaviorController = app.behaviorController,
                     sizeDp = bubbleSizeDpState.dp,
                     onTap = ::onBubbleTap,
                     onLongPress = ::openMenu,
@@ -186,8 +183,8 @@ class OverlayService : Service() {
         bubbleView?.let { runCatching { windowManager.updateViewLayout(it, bubbleParams) } }
     }
 
-    private fun onBubbleTap() {
-        app.emotionController.onTap()
+    private fun onBubbleTap(region: TouchRegion, gazeDx: Float, gazeDy: Float) {
+        app.behaviorController.onTap(region, gazeDx, gazeDy, nowMillis = System.currentTimeMillis())
     }
 
     private fun onBubbleDrag(dx: Float, dy: Float) {
@@ -271,8 +268,9 @@ class OverlayService : Service() {
 
     private fun cycleDebugEmotion() {
         val all = KiraEmotion.entries
-        val next = all[(all.indexOf(emotionState) + 1) % all.size]
-        app.emotionController.setEmotion(next)
+        val current = app.behaviorController.emotion.emotion.value
+        val next = all[(all.indexOf(current) + 1) % all.size]
+        app.behaviorController.emotion.setEmotion(next)
     }
 
     private fun openAppScreen(extra: String) {

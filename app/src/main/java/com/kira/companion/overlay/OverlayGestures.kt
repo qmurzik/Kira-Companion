@@ -3,6 +3,7 @@ package com.kira.companion.overlay
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 
 /**
@@ -11,17 +12,18 @@ import androidx.compose.ui.input.pointer.pointerInput
  * handlers are layered on the same modifier chain: [detectTapGestures] recognizes the tap/
  * long-press pair, while [detectDragGestures] independently recognizes drags past the touch
  * slop. Both are standard Compose Foundation gesture detectors used together this way in many
- * real drag-and-drop / floating-bubble implementations.
+ * real drag-and-drop / floating-bubble implementations. [onTap] carries the tap's [Offset]
+ * within the bubble so the caller can tell which part of Kira was actually touched.
  */
 fun Modifier.kiraOverlayGestures(
-    onTap: () -> Unit,
+    onTap: (Offset) -> Unit,
     onLongPress: () -> Unit,
     onDrag: (dx: Float, dy: Float) -> Unit,
     onDragEnd: () -> Unit,
 ): Modifier = this
     .pointerInput(Unit) {
         detectTapGestures(
-            onTap = { onTap() },
+            onTap = { offset -> onTap(offset) },
             onLongPress = { onLongPress() },
         )
     }

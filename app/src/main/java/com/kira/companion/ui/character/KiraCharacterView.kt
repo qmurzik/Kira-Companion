@@ -3,6 +3,7 @@ package com.kira.companion.ui.character
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,6 +21,7 @@ import com.kira.companion.behavior.KiraBehaviorController
 import com.kira.companion.render.ModelStatus
 import com.kira.companion.render.ModelStatusRepository
 import com.kira.companion.render.VrmCharacterHost
+import io.github.sceneview.RenderQuality
 
 /**
  * Shows Kira: the real 3D model once it's confirmed loadable, or an honest explanation of
@@ -31,6 +33,8 @@ fun KiraCharacterView(
     modelStatusRepository: ModelStatusRepository,
     behaviorController: KiraBehaviorController,
     modifier: Modifier = Modifier,
+    renderQuality: RenderQuality = RenderQuality.Default,
+    minUpdateIntervalMillis: Long = 0L,
 ) {
     val status by modelStatusRepository.status.collectAsStateWithLifecycle()
 
@@ -55,7 +59,9 @@ fun KiraCharacterView(
                 modelData = current.data,
                 assetPath = current.assetPath,
                 controller = behaviorController,
-                modifier = Modifier,
+                modifier = Modifier.fillMaxSize(),
+                renderQuality = renderQuality,
+                minUpdateIntervalMillis = minUpdateIntervalMillis,
             )
         }
     }

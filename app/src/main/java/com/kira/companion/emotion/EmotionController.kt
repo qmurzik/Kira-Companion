@@ -1,17 +1,13 @@
 package com.kira.companion.emotion
 
 import com.kira.companion.model.KiraEmotion
-import com.kira.companion.model.ReactionFrequency
 import com.kira.companion.model.spec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -20,7 +16,9 @@ import kotlinx.coroutines.launch
  *  - Automatically returning to IDLE after each emotion's configured duration.
  *  - Exposing how long the current state has been active, so future logic can factor in
  *    "how long has Kira felt this way" (e.g. to avoid flip-flopping too fast).
- *  - Driving spontaneous "random reaction" ticks when Kira has been idle on screen for a while.
+ *  - Applying a spontaneous "random reaction" when asked to (see [triggerRandomReaction]) -
+ *    the *timing* of those requests belongs to [com.kira.companion.behavior.RandomBehaviorScheduler],
+ *    not this class.
  */
 class EmotionController(private val scope: CoroutineScope) {
 
@@ -102,29 +100,3 @@ class EmotionController(private val scope: CoroutineScope) {
     }
 }
 
-private fun ReactionFrequency.intervalRangeMillisOrNull(): LongRange? = when (this) {
-    ReactionFrequency.OFF -> null
-    ReactionFrequency.LOW -> 4 * 60_000L..8 * 60_000L
-    ReactionFrequency.NORMAL -> 2 * 60_000L..4 * 60_000L
-    ReactionFrequency.HIGH -> 45_000L..90_000L
-}
-
-/**
- * Launches a loop that periodically asks [controller] to attempt a random reaction,
- * respecting the live "frequency" setting (OFF pauses the loop entirely, without any
- * busy-polling - it just suspends on the settings [Flow] until frequency changes again).
- * Cancel the returned [Job] (or the parent scope) to stop it, e.g. when the overlay
- * service is destroyed.
- */
-fun CoroutineScope.startRandomReactionLoop(
-    controller: EmotionController,
-    frequencyFlow: Flow<ReactionFrequency>,
-): Job = launch {
-    frequencyFlow.collectLatest { frequency ->
-        val range = frequency.intervalRangeMillisOrNull() ?: return@collectLatest
-        while (isActive) {
-            delay(range.random())
-            controller.triggerRandomReaction()
-        }
-    }
-}
