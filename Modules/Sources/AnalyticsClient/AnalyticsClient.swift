@@ -10,8 +10,6 @@ import ComposableArchitecture
 import PersistenceKeys
 import LoggerClient
 import Models
-import PostHog
-import Sentry
 import OSLog
 import UserNotifications
 
@@ -36,71 +34,32 @@ public struct AnalyticsClient: Sendable {
 
 extension AnalyticsClient: DependencyKey {
     
+    /// ForPDA Next ships without third-party analytics or crash reporting.
+    /// All "analytics" calls are reduced to local, privacy-safe OSLog entries:
+    /// no identifiers, no user properties and nothing leaves the device.
     public static var liveValue: Self {
         @Dependency(\.logger[.analytics]) var logger
         
         return AnalyticsClient(
-            configure: { config in
-                @Shared(.appStorage(AppStorageKeys.analyticsId)) var analyticsId = UUID.v7().uuidString
-                
-                configureAnalytics(
-                    id: analyticsId,
-                    isEnabled: config.isAnalyticsEnabled,
-                    isDebugEnabled: config.isAnalyticsDebugEnabled
-                )
-                
-                configureCrashlytics(
-                    id: analyticsId,
-                    isEnabled: config.isCrashlyticsEnabled,
-                    isDebugEnabled: config.isCrashlyticsDebugEnabled
-                )
+            configure: { _ in
+                logger.info("Analytics disabled: local logging only")
             },
-            identify: { id, userProperties in
-                logger.info("Identifying user with id: \(id)")
-                PostHogSDK.shared.identify(id, userProperties: userProperties)
-            },
-            setUserProperties: { properties in
-                // Always make sure that properties are serializable
-                // PostHog will show an error in console when used in debug mode
-                PostHogSDK.shared.setPersonProperties(userPropertiesToSet: properties)
-            },
-            logout: {
-                logger.info("Analytics has been reset after logout")
-                PostHogSDK.shared.reset()
-            },
+            identify: { _, _ in },
+            setUserProperties: { _ in },
+            logout: { },
             log: { event in
-                // logger.info("\(event.name) \(event.properties.map { "(\($0))" } ?? "")")
-                PostHogSDK.shared.capture(event.name, properties: event.properties)
+                logger.debug("event: \(event.name, privacy: .public)")
             },
-            registerPushNotificationToken: { deviceToken in
-                logger.info("Registered remote notifications with token: \(deviceToken)")
-                PostHogSDK.shared.registerPushNotificationToken(deviceToken)
-            },
-            capturePushNotificationOpened: { response in
-                PostHogSDK.shared.capturePushNotificationOpened(response: response)
-            },
-            
+            registerPushNotificationToken: { _ in },
+            capturePushNotificationOpened: { _ in },
             capture: { error in
-                logger.critical("Captured error via Sentry: \(error)")
-                SentrySDK.capture(error: error)
+                // Only the error *type* is logged publicly; the payload may contain user content.
+                logger.error("error: \(String(describing: type(of: error)), privacy: .public) \(String(describing: error), privacy: .private)")
             },
-            addBreadcrumb: { category, message, data, type in
-                let crumb = Breadcrumb()
-                crumb.level = .info
-                crumb.category = category
-                crumb.message = message
-                crumb.type = type
-                if let data {
-                    for property in data {
-                        crumb.setData(value: property.value, key: property.key)
-                    }
-                }
-                SentrySDK.addBreadcrumb(crumb)
+            addBreadcrumb: { category, _, _, _ in
+                logger.debug("breadcrumb: \(category, privacy: .public)")
             },
-            reportFullyDisplayed: {
-                // logger.info("Did report fully displayed")
-                SentrySDK.reportFullyDisplayed()
-            }
+            reportFullyDisplayed: { }
         )
     }
     
@@ -137,99 +96,6 @@ extension AnalyticsClient: DependencyKey {
         addBreadcrumb: { _, _, _, _ in },
         reportFullyDisplayed: { }
     )
-}
-
-// MARK: - Configurations
-
-extension AnalyticsClient {
-    
-    struct Secrets {
-        enum Key: String {
-            case SENTRY_DSN
-            case SENTRY_DSYM_TOKEN
-            case POSTHOG_TOKEN
-        }
-        
-        static func get(_ key: Key) -> String {
-            guard let value = Bundle.main.object(forInfoDictionaryKey: key.rawValue) as? String
-            else { fatalError("Couldn't find \(key.rawValue) key") }
-            return value
-        }
-    }
-    
-    private static func configureAnalytics(id: String, isEnabled: Bool, isDebugEnabled: Bool) {
-        let config = PostHogConfig(projectToken: Secrets.get(.POSTHOG_TOKEN), host: "https://eu.i.posthog.com")
-        config.debug = isDebugEnabled
-        config.getAnonymousId = { _ in UUID(uuidString: id) ?? UUID.v7() }
-        config.optOut = !isEnabled
-        config.captureScreenViews = false // Track manually
-        config.capturePushNotificationSubscriptions = false // To disable swizzling
-        config.capturePushNotificationOpened = false // To disable swizzling
-        PostHogSDK.shared.setup(config)
-        
-        // Checking for opt out
-        let isPosthogOptedOut = PostHogSDK.shared.isOptOut()
-        if isEnabled && isPosthogOptedOut {
-            PostHogSDK.shared.optIn()
-        } else if !isEnabled && !isPosthogOptedOut {
-            PostHogSDK.shared.optOut()
-        }
-        
-        @Dependency(\.analyticsClient) var analytics
-        @Dependency(\.logger[.analytics]) var logger
-        @Shared(.userSession) var userSession
-        
-        // Check if we have a current user session and id
-        if let userId = userSession?.userId {
-            // Check if user ID is the same as PostHog ID
-            if String(userId) == PostHogSDK.shared.getDistinctId() {
-                // If there's no mismatch, we're configured
-                logger.info("Analytics has been succesfully configured. Enabled: \(isEnabled) / Debug: \(isDebugEnabled)")
-            } else {
-                // If there's mismatch, we're doomed (jk)
-                logger.warning("Analytics user ID & user session ID mismatch, identifying as \(userId)")
-                analytics.identify(id: String(userId), userProperties: nil)
-            }
-        } else {
-            logger.info("User session not found, using default analytics ID: \(id)")
-        }
-    }
-    
-    private static func configureCrashlytics(id: String, isEnabled: Bool, isDebugEnabled: Bool) {
-        SentrySDK.start { options in
-            options.dsn = Secrets.get(.SENTRY_DSN)
-            options.debug = isDebugEnabled
-            options.enabled = isEnabled
-            options.configureProfiling = {
-                $0.sessionSampleRate = 1
-                $0.profileAppStarts = true
-            }
-            options.enableAppHangTracking = false // False positives
-            options.enablePreWarmedAppStartTracing = true
-            options.enableCoreDataTracing = false // I don't have CoreData
-            options.enableUserInteractionTracing = false // Doesn't work with SwiftUI
-            options.enableUIViewControllerTracing = false // I don't have UIViewControllers
-            options.enableTimeToFullDisplayTracing = true
-            options.tracePropagationTargets = ["https://4pda.to"] // Dismiss analytics requests
-            options.swiftAsyncStacktraces = true
-            options.tracesSampleRate = 1.0
-            options.diagnosticLevel = .warning
-            
-            // Filter out posthog http crumbs
-            options.beforeBreadcrumb = {
-                if $0.category == "http",
-                   let urlString = $0.data?["url"] as? String,
-                   urlString.contains("posthog") {
-                    return nil
-                }
-                return $0
-            }
-        }
-        SentrySDK.setUser(User(userId: id))
-        
-        @Dependency(\.logger[.analytics]) var logger
-        logger.info("Crashlytics has been successfully configured. Enabled: \(isEnabled) / Debug: \(isDebugEnabled)")
-    }
 }
 
 // MARK: - Extension

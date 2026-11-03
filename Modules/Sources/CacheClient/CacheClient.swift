@@ -270,9 +270,7 @@ private extension CacheClient {
 
 fileprivate extension URL {
     static var sharedContainerURL: URL {
-        FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "group.com.subvert.forpda"
-        )!
+        AppGroup.containerURL
     }
 }
 

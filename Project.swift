@@ -14,15 +14,13 @@ let project = Project(
             sources: ["Modules/App/**"],
             resources: ["Modules/Resources/**"],
             entitlements: .dictionary([
-                "aps-environment": "development",
-                "com.apple.security.application-groups": .array(["group.com.subvert.forpda"])
+                "com.apple.security.application-groups": .array([.string(App.appGroup)])
             ]),
             dependencies: [
                 .Internal.AppFeature,
                 .Internal.CacheClient,
                 .Internal.Models,
                 .target(name: "SafariExtension"),
-                .target(name: "NotificationServiceExtension"),
                 .SPM.TCA,
             ],
             settings: .settings(
@@ -768,8 +766,6 @@ let project = Project(
                     .Internal.LoggerClient,
                     .Internal.Models,
                     .Internal.PersistenceKeys,
-                    .SPM.PostHog,
-                    .SPM.Sentry,
                     .SPM.TCA
                 ]
             ),
@@ -993,44 +989,15 @@ let project = Project(
                     .folderReference(path: "Extensions/Safari/Resources/_locales"),
                     .folderReference(path: "Extensions/Safari/Resources/images")
                 ],
-                settings: .settings(
-                    base: SettingsDictionary()
-                        .manualCodeSigning(
-                            identity: "iPhone Developer",
-                            provisioningProfileSpecifier: "match Development com.subvert.forpda.safariextension"
-                        )
-                        .setDevelopmentTeam("7353CQCGQC")
-                        .merging([
-                            "TARGETED_DEVICE_FAMILY": "1",
-                            "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO"
-                        ])
-                )
-            ),
-
-            .target(
-                name: "NotificationServiceExtension",
-                destinations: .iOS,
-                product: .appExtension,
-                bundleId: App.bundleId + "." + "nse",
-                deploymentTargets: App.deploymentTargets,
-                infoPlist: .notificationServiceExtension,
-                sources: ["Extensions/NotificationService/**"],
-                resources: ["Extensions/NotificationService/Resources/**"],
                 entitlements: .dictionary([
-                    "com.apple.security.application-groups": .array(["group.com.subvert.forpda"])
+                    "com.apple.security.application-groups": .array([.string(App.appGroup)])
                 ]),
-                dependencies: [
-                    .Internal.Models,
-                    .Internal.NotificationsClient,
-                ],
                 settings: .settings(
                     base: SettingsDictionary()
-                        .manualCodeSigning(
-                            identity: "iPhone Developer",
-                            provisioningProfileSpecifier: "match Development com.subvert.forpda.nse"
-                        )
-                        .setDevelopmentTeam("7353CQCGQC")
                         .merging([
+                            "CODE_SIGN_STYLE": "Automatic",
+                            "CODE_SIGNING_ALLOWED": "$(FORPDA_CODE_SIGNING_ALLOWED)",
+                            "FORPDA_CODE_SIGNING_ALLOWED": "YES",
                             "TARGETED_DEVICE_FAMILY": "1",
                             "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO"
                         ])
@@ -1046,11 +1013,16 @@ let project = Project(
 
 // MARK: - Helpers
 
+/// Single place to rename the app. `name` is the internal target/module name (kept for
+/// compatibility with the upstream ForPDA code base); `displayName` is what users see.
 struct App {
     static let name = "ForPDA"
+    static let displayName = "ForPDA Next"
     static let destinations: Destinations = .iOS
-    static let bundleId = "com.subvert.forpda"
-    static let deploymentTargets: DeploymentTargets = .iOS("16.0")
+    static let bundleId = "com.qmurzik.forpdanext"
+    static let appGroup = "group.com.qmurzik.forpdanext"
+    static let urlScheme = "forpdanext"
+    static let deploymentTargets: DeploymentTargets = .iOS("17.0")
 }
 
 extension ProjectDescription.Target {
@@ -1154,15 +1126,15 @@ extension Settings {
 extension SettingsDictionary {
     static let appSettings = SettingsDictionary()
         .merging(.targetSettings)
-        .setAppName(App.name)
-        .setDevelopmentTeam("7353CQCGQC")
-    
+        .setAppName(App.displayName)
         .includeAppIcon()
-        .merging(["CODE_SIGNING_ALLOWED": .string("YES")])
-        .manualCodeSigning(
-            identity: "Apple Development",
-            provisioningProfileSpecifier: "match Development com.subvert.forpda"
-        )
+        // Signing is decided at build time (see .github/workflows/build-ipa.yml):
+        // CI builds unsigned and optionally re-signs with user-provided credentials.
+        .merging([
+            "CODE_SIGN_STYLE": "Automatic",
+            "CODE_SIGNING_ALLOWED": "$(FORPDA_CODE_SIGNING_ALLOWED)",
+            "FORPDA_CODE_SIGNING_ALLOWED": "YES"
+        ])
     
     static let targetSettings = SettingsDictionary()
         .useIPhoneAsSingleDestination()
@@ -1246,8 +1218,8 @@ extension InfoPlist {
             "CFBundleURLTypes": [
                 [
                     "CFBundleTypeRole": "Editor",
-                    "CFBundleURLName": "com.subvert.forpda",
-                    "CFBundleURLSchemes": ["forpda"]
+                    "CFBundleURLName": .string(App.bundleId),
+                    "CFBundleURLSchemes": [.string(App.urlScheme)]
                 ]
             ],
             
@@ -1255,14 +1227,16 @@ extension InfoPlist {
             "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
             "UIBackgroundModes": ["fetch"],
             
-            "BGTaskSchedulerPermittedIdentifiers": ["com.subvert.forpda.background.notifications"],
+            "BGTaskSchedulerPermittedIdentifiers": [.string(App.bundleId + ".background.notifications")],
+            "FORPDA_APP_GROUP": .string(App.appGroup),
+            "FORPDA_URL_SCHEME": .string(App.urlScheme),
             
             "NSCameraUsageDescription": "To capture and send photos in QMS",
             "NSMicrophoneUsageDescription": "To send voice messages in QMS",
-            "NSPhotoLibraryUsageDescription": "To send attachments in QMS",
-            
-            "POSTHOG_TOKEN": "$(POSTHOG_TOKEN)",
-            "SENTRY_DSN": "$(SENTRY_DSN)",
+            "NSPhotoLibraryUsageDescription": "To attach photos to posts and messages",
+            "NSPhotoLibraryAddUsageDescription": "To save images from posts to your library",
+            "LSSupportsOpeningDocumentsInPlace": false,
+            "UIFileSharingEnabled": true,
             "RELEASE_CHANNEL": "$(RELEASE_CHANNEL)"
         ]
     )
@@ -1379,9 +1353,8 @@ extension TargetDependency.SPM {
     static let Nuke =           TargetDependency.external(name: "Nuke")
     static let NukeUI =         TargetDependency.external(name: "NukeUI")
     static let PDAPI =          TargetDependency.external(name: "PDAPI_SPM")
-    static let PostHog =        TargetDependency.external(name: "PostHog")
+    static let ForumCore =      TargetDependency.external(name: "ForumCore")
     static let RichTextKit =    TargetDependency.external(name: "RichTextKit")
-    static let Sentry =         TargetDependency.external(name: "Sentry")
     static let SFSafeSymbols =  TargetDependency.external(name: "SFSafeSymbols")
     static let SkeletonUI =     TargetDependency.external(name: "SkeletonUI")
     static let SmoothGradient = TargetDependency.external(name: "SmoothGradient")

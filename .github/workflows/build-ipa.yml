@@ -1,0 +1,101 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [ "claude/forpda-next", "forpda-next/**" ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TUIST_SKIP_UPDATE_CHECK: "1"
+
+jobs:
+  core-tests:
+    name: Core logic tests (Swift package)
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: Scripts/ci/select-xcode.sh
+      - name: swift test (ForumCore)
+        run: swift test --package-path Core 2>&1 | tail -200
+
+  app-tests:
+    name: App unit tests (simulator)
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: Scripts/ci/select-xcode.sh
+      - name: Install Tuist
+        uses: jdx/mise-action@v2
+        with:
+          install_args: "tuist"
+      - name: Cache SPM checkouts
+        uses: actions/cache@v4
+        with:
+          path: Tuist/.build
+          key: tuist-spm-${{ hashFiles('Tuist/Package.resolved', 'Tuist/Package.swift') }}
+          restore-keys: tuist-spm-
+      - name: Generate project
+        run: |
+          tuist install
+          tuist generate --no-open
+      - name: Run tests
+        run: Scripts/ci/run-tests.sh
+
+  ipa:
+    name: Archive & package IPA
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: Scripts/ci/select-xcode.sh
+      - name: Install Tuist
+        uses: jdx/mise-action@v2
+        with:
+          install_args: "tuist"
+      - name: Cache SPM checkouts
+        uses: actions/cache@v4
+        with:
+          path: Tuist/.build
+          key: tuist-spm-${{ hashFiles('Tuist/Package.resolved', 'Tuist/Package.swift') }}
+          restore-keys: tuist-spm-
+      - name: Generate project
+        run: |
+          tuist install
+          tuist generate --no-open
+      - name: Archive (unsigned)
+        run: Scripts/ci/archive-unsigned.sh
+      - name: Package unsigned IPA
+        run: Scripts/ci/package-ipa.sh build/ForPDA.xcarchive build/ForPDA-Next-unsigned.ipa
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForPDA-Next-unsigned-ipa
+          path: build/ForPDA-Next-unsigned.ipa
+          if-no-files-found: error
+      - name: Re-sign IPA (only if signing secrets are configured)
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+        run: |
+          if [ -z "$IOS_P12_BASE64" ] || [ -z "$IOS_PROFILE_BASE64" ]; then
+            echo "No signing secrets configured - skipping signed IPA."
+            exit 0
+          fi
+          Scripts/ci/resign-ipa.sh build/ForPDA-Next-unsigned.ipa build/ForPDA-Next-signed.ipa
+      - name: Upload signed IPA
+        if: hashFiles('build/ForPDA-Next-signed.ipa') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForPDA-Next-signed-ipa
+          path: build/ForPDA-Next-signed.ipa

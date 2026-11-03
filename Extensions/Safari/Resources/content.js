@@ -43,7 +43,7 @@ function afterNavigate() {
             const result = window.location.href.match(regex);
 
             if (result !== null) {
-                window.location.href = `forpda://article/${result}?title=${encodeURIComponent(title)}&imageUrl=${encodeURIComponent(imageUrl)}`;
+                window.location.href = `forpdanext://article/${result}?title=${encodeURIComponent(title)}&imageUrl=${encodeURIComponent(imageUrl)}`;
             }
             break;
         }
@@ -57,7 +57,7 @@ function afterNavigate() {
 
             if (params.has('showforum')) {
                 const forumId = params.get('showforum');
-                let forumUrl = `forpda://forum/${forumId}`;
+                let forumUrl = `forpdanext://forum/${forumId}`;
 
                 // Append st if present
                 if (params.has('st')) {
@@ -73,7 +73,7 @@ function afterNavigate() {
             // https://4pda.to/forum/index.php?showtopic=1104159&st=20#entry137570321
             if (params.has('showtopic')) {
                 const topicId = params.get('showtopic');
-                let topicUrl = `forpda://topic/${topicId}`;
+                let topicUrl = `forpdanext://topic/${topicId}`;
 
                 const queryParams = new URLSearchParams();
 
@@ -98,7 +98,7 @@ function afterNavigate() {
             // https://4pda.to/forum/index.php?act=announce&f=140&st=238
             if (params.get('act') === 'announce') {
                 const forumId = params.get('f');
-                let announceUrl = `forpda://announce/${forumId}`;
+                let announceUrl = `forpdanext://announce/${forumId}`;
 
                 if (params.has('st')) {
                     announceUrl += `?st=${params.get('st')}`;
@@ -111,7 +111,7 @@ function afterNavigate() {
             // https://4pda.to/forum/index.php?showuser=3640948
             if (params.has('showuser')) {
                 const userId = params.get('showuser');
-                let forumUrl = `forpda://user/${userId}`;
+                let forumUrl = `forpdanext://user/${userId}`;
                 
                 window.location.href = forumUrl;
                 break;

@@ -68,7 +68,7 @@ public struct LogStoreFeature: Reducer, Sendable {
                             .getEntries(at: position)
                             .compactMap { $0 as? OSLogEntryLog }
                             // .filter { $0.subsystem == "pdapi" || $0.category == "App" }
-                            .filter { $0.subsystem == "com.subvert.forpda" }
+                            .filter { $0.subsystem == (Bundle.main.bundleIdentifier ?? "") }
                             .sorted(by: { $0.date < $1.date })
                             // .map { "[\(formatter.string(from: $0.date))] \($0.composedMessage)" }
                             .map { Log(message: $0.composedMessage, date: $0.date, category: $0.category) }

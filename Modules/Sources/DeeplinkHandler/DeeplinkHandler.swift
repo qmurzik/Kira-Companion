@@ -125,9 +125,10 @@ public struct DeeplinkHandler {
     
     
     public func handleInnerToInnerURL(_ url: URL) throws(DeeplinkError) -> Deeplink {
-        let url = URL(string: url.absoluteString.replacingOccurrences(of: "&amp;", with: "&"))!
+        let url = URL(string: url.absoluteString.replacingOccurrences(of: "&amp;", with: "&")) ?? url
         
-        guard let host = url.host, host == "4pda.to" else { throw .externalURL(url) }
+        let knownHosts: Set<String> = ["4pda.to", "www.4pda.to", "4pda.ru", "www.4pda.ru", "4pda.ws"]
+        guard let host = url.host?.lowercased(), knownHosts.contains(host) else { throw .externalURL(url) }
         
         // File download link type
         guard !url.pathComponents.contains("dl") else { throw .fileDownload(url: url) }

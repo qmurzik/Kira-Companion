@@ -3,49 +3,21 @@
 //  AnalyticsClient
 //
 //  Created by Ilia Lubianoi on 18.03.2025.
+//  Modified for ForPDA Next: performance tracing is a no-op (no Sentry).
 //
 
 import SwiftUI
-import Sentry
-
-// MARK: - View
 
 public struct TracePerformanceView<Content: View>: View {
-    
-    let viewName: String?
     let content: Content
     
-    public init(
-        _ viewName: String? = nil,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.viewName = viewName
+    public init(_ viewName: String? = nil, @ViewBuilder content: () -> Content) {
         self.content = content()
     }
     
-    public var body: some View {
-        SentryTracedView(viewName) {
-            content
-        }
-    }
+    public var body: some View { content }
 }
-
-// MARK: - Modifier
-
-struct TracePerformanceModifier: ViewModifier {
-    
-    let viewName: String
-
-    func body(content: Content) -> some View {
-        content
-            .sentryTrace(viewName)
-    }
-}
-
-// MARK: - Modifier Extension
 
 public extension View {
-    func tracePerformance(viewName: String) -> some View {
-        return modifier(TracePerformanceModifier(viewName: viewName))
-    }
+    func tracePerformance(viewName: String) -> some View { self }
 }

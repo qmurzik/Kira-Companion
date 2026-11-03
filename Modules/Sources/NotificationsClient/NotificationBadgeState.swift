@@ -193,8 +193,7 @@ struct NotificationBadgeState: Codable, Equatable, Sendable {
 
 extension SharedKey where Self == FileStorageKey<NotificationBadgeState>.Default {
     static var notificationBadgeState: Self {
-        let containerURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: "group.com.subvert.forpda")!
+        let containerURL = AppGroup.containerURL
         let url = containerURL.appending(component: "NotificationBadgeState.json")
         return Self[.fileStorage(url), default: .default]
     }

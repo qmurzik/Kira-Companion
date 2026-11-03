@@ -48,3 +48,7 @@ xcuserdata/
 .DS_Store
 .AppleDouble
 .LSOverride
+# SwiftPM (Core)
+Core/.build/
+Core/.swiftpm/
+build/

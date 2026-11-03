@@ -1,348 +1,329 @@
 {
-  "originHash" : "4af2b617a7e4260a4cbe005ec87c06df8b4c1c0d6801af1e1dc154c636bff1df",
-  "pins" : [
+  "pins": [
     {
-      "identity" : "activityindicatorview",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/exyte/ActivityIndicatorView",
-      "state" : {
-        "revision" : "36140867802ae4a1d2b11490bcbbefe058001d14",
-        "version" : "1.2.1"
+      "identity": "activityindicatorview",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/exyte/ActivityIndicatorView",
+      "state": {
+        "revision": "36140867802ae4a1d2b11490bcbbefe058001d14",
+        "version": "1.2.1"
       }
     },
     {
-      "identity" : "alerttoast",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SubvertDev/AlertToast",
-      "state" : {
-        "branch" : "d0f7d6b",
-        "revision" : "d0f7d6bafd3e8ffe99afba4995822d24aee044fb"
+      "identity": "alerttoast",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SubvertDev/AlertToast",
+      "state": {
+        "branch": "d0f7d6b",
+        "revision": "d0f7d6bafd3e8ffe99afba4995822d24aee044fb"
       }
     },
     {
-      "identity" : "anchoredpopup",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SubvertDev/AnchoredPopup",
-      "state" : {
-        "branch" : "main",
-        "revision" : "c409740455e14866a223715ed285da33cfd0f044"
+      "identity": "anchoredpopup",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SubvertDev/AnchoredPopup",
+      "state": {
+        "branch": "main",
+        "revision": "c409740455e14866a223715ed285da33cfd0f044"
       }
     },
     {
-      "identity" : "cache",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/hyperoslo/Cache",
-      "state" : {
-        "revision" : "24e47109e31b2031cb26e25cc1b81b607496066c",
-        "version" : "7.4.0"
+      "identity": "cache",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/hyperoslo/Cache",
+      "state": {
+        "revision": "24e47109e31b2031cb26e25cc1b81b607496066c",
+        "version": "7.4.0"
       }
     },
     {
-      "identity" : "chat",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SubvertDev/Chat",
-      "state" : {
-        "branch" : "main",
-        "revision" : "63020101082251cbb6e2ed3248ed92611e2688ab"
+      "identity": "chat",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SubvertDev/Chat",
+      "state": {
+        "branch": "main",
+        "revision": "63020101082251cbb6e2ed3248ed92611e2688ab"
       }
     },
     {
-      "identity" : "combine-schedulers",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/combine-schedulers",
-      "state" : {
-        "revision" : "114354e8c1667a2edc4993700fb9fa4f90157b56",
-        "version" : "1.2.2"
+      "identity": "combine-schedulers",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/combine-schedulers",
+      "state": {
+        "revision": "114354e8c1667a2edc4993700fb9fa4f90157b56",
+        "version": "1.2.2"
       }
     },
     {
-      "identity" : "giphy-ios-sdk",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Giphy/giphy-ios-sdk",
-      "state" : {
-        "revision" : "f7a8edf513ab14147ef33c942b10b45cdac1e765",
-        "version" : "2.3.0"
+      "identity": "giphy-ios-sdk",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/Giphy/giphy-ios-sdk",
+      "state": {
+        "revision": "f7a8edf513ab14147ef33c942b10b45cdac1e765",
+        "version": "2.3.0"
       }
     },
     {
-      "identity" : "kingfisher",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/onevcat/Kingfisher",
-      "state" : {
-        "revision" : "e227df15448d2ad1a5d4e4c49722a71c68f9058a",
-        "version" : "8.7.0"
+      "identity": "kingfisher",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/onevcat/Kingfisher",
+      "state": {
+        "revision": "e227df15448d2ad1a5d4e4c49722a71c68f9058a",
+        "version": "8.7.0"
       }
     },
     {
-      "identity" : "libwebp-xcode",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SDWebImage/libwebp-Xcode",
-      "state" : {
-        "revision" : "0d60654eeefd5d7d2bef3835804892c40225e8b2",
-        "version" : "1.5.0"
+      "identity": "libwebp-xcode",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SDWebImage/libwebp-Xcode",
+      "state": {
+        "revision": "0d60654eeefd5d7d2bef3835804892c40225e8b2",
+        "version": "1.5.0"
       }
     },
     {
-      "identity" : "mediapicker",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SubvertDev/MediaPicker",
-      "state" : {
-        "branch" : "main",
-        "revision" : "199f445c1efa65291160d9589ad8509848130783"
+      "identity": "mediapicker",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SubvertDev/MediaPicker",
+      "state": {
+        "branch": "main",
+        "revision": "199f445c1efa65291160d9589ad8509848130783"
       }
     },
     {
-      "identity" : "nuke",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kean/Nuke",
-      "state" : {
-        "revision" : "30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
-        "version" : "13.2.0"
+      "identity": "nuke",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/kean/Nuke",
+      "state": {
+        "revision": "30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+        "version": "13.2.0"
       }
     },
     {
-      "identity" : "pdapi_spm",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SubvertDev/PDAPI_SPM",
-      "state" : {
-        "revision" : "7ef371a700962cfcc83373ed64bd67605bd24f2d",
-        "version" : "0.8.8"
+      "identity": "pdapi_spm",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SubvertDev/PDAPI_SPM",
+      "state": {
+        "revision": "7ef371a700962cfcc83373ed64bd67605bd24f2d",
+        "version": "0.8.8"
       }
     },
     {
-      "identity" : "posthog-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/PostHog/posthog-ios",
-      "state" : {
-        "revision" : "835f624c2618d72d73650d0ed0029325232f5b0a",
-        "version" : "3.92.0"
+      "identity": "richtextkit",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SubvertDev/RichTextKit",
+      "state": {
+        "branch": "main",
+        "revision": "be15182e607ae63a6e02cede1681ab824fd338fc"
       }
     },
     {
-      "identity" : "richtextkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SubvertDev/RichTextKit",
-      "state" : {
-        "branch" : "main",
-        "revision" : "be15182e607ae63a6e02cede1681ab824fd338fc"
+      "identity": "sfsafesymbols",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SFSafeSymbols/SFSafeSymbols",
+      "state": {
+        "revision": "e01b3d4f861412f8dcee8d93c417d2c2b0cdfd77",
+        "version": "7.0.0"
       }
     },
     {
-      "identity" : "sentry-cocoa",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/getsentry/sentry-cocoa",
-      "state" : {
-        "revision" : "4bb2282661ee6ca2212aa01d19a1214394cd3c45",
-        "version" : "9.30.2"
+      "identity": "skeletonui",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/CSolanaM/SkeletonUI",
+      "state": {
+        "revision": "f025e9ba5d051374d7344efa8859df5b9399a181",
+        "version": "2.0.2"
       }
     },
     {
-      "identity" : "sfsafesymbols",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SFSafeSymbols/SFSafeSymbols",
-      "state" : {
-        "revision" : "e01b3d4f861412f8dcee8d93c417d2c2b0cdfd77",
-        "version" : "7.0.0"
+      "identity": "smoothgradient",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/raymondjavaxx/SmoothGradient",
+      "state": {
+        "revision": "77ac160533ce312f92b566754731e07b20315a41",
+        "version": "1.0.1"
       }
     },
     {
-      "identity" : "skeletonui",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/CSolanaM/SkeletonUI",
-      "state" : {
-        "revision" : "f025e9ba5d051374d7344efa8859df5b9399a181",
-        "version" : "2.0.2"
+      "identity": "swift-async-algorithms",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/apple/swift-async-algorithms",
+      "state": {
+        "revision": "13713a4ffdee8abd929f92568ee9462a46ae26e0",
+        "version": "1.1.7"
       }
     },
     {
-      "identity" : "smoothgradient",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/raymondjavaxx/SmoothGradient",
-      "state" : {
-        "revision" : "77ac160533ce312f92b566754731e07b20315a41",
-        "version" : "1.0.1"
+      "identity": "swift-case-paths",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-case-paths",
+      "state": {
+        "revision": "cb4cba6a8a46a86db0d37dbe09935ead6b24c91a",
+        "version": "1.10.0"
       }
     },
     {
-      "identity" : "swift-async-algorithms",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-async-algorithms",
-      "state" : {
-        "revision" : "13713a4ffdee8abd929f92568ee9462a46ae26e0",
-        "version" : "1.1.7"
+      "identity": "swift-clocks",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-clocks",
+      "state": {
+        "revision": "82440fa0a8b1c381a6d1e8e0fc7bbba53ec63204",
+        "version": "1.1.1"
       }
     },
     {
-      "identity" : "swift-case-paths",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-case-paths",
-      "state" : {
-        "revision" : "cb4cba6a8a46a86db0d37dbe09935ead6b24c91a",
-        "version" : "1.10.0"
+      "identity": "swift-collections",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/apple/swift-collections",
+      "state": {
+        "revision": "35a1edcb8ebd2bfe251d587f0b69e62af28f508c",
+        "version": "1.7.3"
       }
     },
     {
-      "identity" : "swift-clocks",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-clocks",
-      "state" : {
-        "revision" : "82440fa0a8b1c381a6d1e8e0fc7bbba53ec63204",
-        "version" : "1.1.1"
+      "identity": "swift-composable-architecture",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-composable-architecture",
+      "state": {
+        "revision": "377da4061db10d26337a71bb279c506bb951f50f",
+        "version": "1.26.2"
       }
     },
     {
-      "identity" : "swift-collections",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-collections",
-      "state" : {
-        "revision" : "35a1edcb8ebd2bfe251d587f0b69e62af28f508c",
-        "version" : "1.7.3"
+      "identity": "swift-concurrency-extras",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-concurrency-extras",
+      "state": {
+        "revision": "8a4260f7373493435bd21194585c95b72bfdd401",
+        "version": "1.4.3"
       }
     },
     {
-      "identity" : "swift-composable-architecture",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-composable-architecture",
-      "state" : {
-        "revision" : "377da4061db10d26337a71bb279c506bb951f50f",
-        "version" : "1.26.2"
+      "identity": "swift-custom-dump",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-custom-dump",
+      "state": {
+        "revision": "4fb9e7cbb4b8f5a7354005db39447f570d6b3e19",
+        "version": "1.7.3"
       }
     },
     {
-      "identity" : "swift-concurrency-extras",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
-      "state" : {
-        "revision" : "8a4260f7373493435bd21194585c95b72bfdd401",
-        "version" : "1.4.3"
+      "identity": "swift-dependencies",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-dependencies",
+      "state": {
+        "revision": "b476cc5761057d8d857de063fe7ac8daecf5c06b",
+        "version": "1.17.1"
       }
     },
     {
-      "identity" : "swift-custom-dump",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-custom-dump",
-      "state" : {
-        "revision" : "4fb9e7cbb4b8f5a7354005db39447f570d6b3e19",
-        "version" : "1.7.3"
+      "identity": "swift-identified-collections",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-identified-collections",
+      "state": {
+        "revision": "322d9ffeeba85c9f7c4984b39422ec7cc3c56597",
+        "version": "1.1.1"
       }
     },
     {
-      "identity" : "swift-dependencies",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-dependencies",
-      "state" : {
-        "revision" : "b476cc5761057d8d857de063fe7ac8daecf5c06b",
-        "version" : "1.17.1"
+      "identity": "swift-issue-reporting",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-issue-reporting",
+      "state": {
+        "revision": "b23bb4493c439d3e05152bc167014235ba3d47fc",
+        "version": "2.1.2"
       }
     },
     {
-      "identity" : "swift-identified-collections",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-identified-collections",
-      "state" : {
-        "revision" : "322d9ffeeba85c9f7c4984b39422ec7cc3c56597",
-        "version" : "1.1.1"
+      "identity": "swift-memberwise-init-macro",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/gohanlon/swift-memberwise-init-macro",
+      "state": {
+        "revision": "d0fb82bb6638051524214fb54524bfcd876735a1",
+        "version": "0.6.0"
       }
     },
     {
-      "identity" : "swift-issue-reporting",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
-      "state" : {
-        "revision" : "b23bb4493c439d3e05152bc167014235ba3d47fc",
-        "version" : "2.1.2"
+      "identity": "swift-navigation",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-navigation",
+      "state": {
+        "revision": "7e95e5e9ff0a64f6ad8bca59083f8d6ba381b6ff",
+        "version": "2.11.2"
       }
     },
     {
-      "identity" : "swift-memberwise-init-macro",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/gohanlon/swift-memberwise-init-macro",
-      "state" : {
-        "revision" : "d0fb82bb6638051524214fb54524bfcd876735a1",
-        "version" : "0.6.0"
+      "identity": "swift-perception",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-perception",
+      "state": {
+        "revision": "597afd46249f4a71885b95d26b26cc5b893daf32",
+        "version": "2.0.12"
       }
     },
     {
-      "identity" : "swift-navigation",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-navigation",
-      "state" : {
-        "revision" : "7e95e5e9ff0a64f6ad8bca59083f8d6ba381b6ff",
-        "version" : "2.11.2"
+      "identity": "swift-sharing",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-sharing",
+      "state": {
+        "revision": "3552faf8a6c18ce896ec5a72bd8c34755f0f03e0",
+        "version": "2.10.1"
       }
     },
     {
-      "identity" : "swift-perception",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-perception",
-      "state" : {
-        "revision" : "597afd46249f4a71885b95d26b26cc5b893daf32",
-        "version" : "2.0.12"
+      "identity": "swift-snapshot-testing",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/pointfreeco/swift-snapshot-testing",
+      "state": {
+        "revision": "59a99c458de4d2dee580529b61b4f78dca7b7fa6",
+        "version": "1.19.4"
       }
     },
     {
-      "identity" : "swift-sharing",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-sharing",
-      "state" : {
-        "revision" : "3552faf8a6c18ce896ec5a72bd8c34755f0f03e0",
-        "version" : "2.10.1"
+      "identity": "swift-syntax",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/swiftlang/swift-syntax",
+      "state": {
+        "revision": "0687f71944021d616d34d922343dcef086855920",
+        "version": "600.0.1"
       }
     },
     {
-      "identity" : "swift-snapshot-testing",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-snapshot-testing",
-      "state" : {
-        "revision" : "59a99c458de4d2dee580529b61b4f78dca7b7fa6",
-        "version" : "1.19.4"
+      "identity": "swiftygif",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/kirualex/SwiftyGif",
+      "state": {
+        "revision": "4430cbc148baa3907651d40562d96325426f409a",
+        "version": "5.4.5"
       }
     },
     {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swiftlang/swift-syntax",
-      "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+      "identity": "youtubeplayerkit",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/SvenTiigi/YouTubePlayerKit",
+      "state": {
+        "revision": "1ae827573024ab13dd6adea33b25d3eef6ff667c",
+        "version": "2.0.5"
       }
     },
     {
-      "identity" : "swiftygif",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kirualex/SwiftyGif",
-      "state" : {
-        "revision" : "4430cbc148baa3907651d40562d96325426f409a",
-        "version" : "5.4.5"
+      "identity": "zmarkupparser",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/ZhgChgLi/ZMarkupParser",
+      "state": {
+        "revision": "904c70f5d5d33080a016cca9258eff778199d57e",
+        "version": "2.0.2"
       }
     },
     {
-      "identity" : "youtubeplayerkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SvenTiigi/YouTubePlayerKit",
-      "state" : {
-        "revision" : "1ae827573024ab13dd6adea33b25d3eef6ff667c",
-        "version" : "2.0.5"
-      }
-    },
-    {
-      "identity" : "zmarkupparser",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ZhgChgLi/ZMarkupParser",
-      "state" : {
-        "revision" : "904c70f5d5d33080a016cca9258eff778199d57e",
-        "version" : "2.0.2"
-      }
-    },
-    {
-      "identity" : "znstextattachment",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ZhgChgLi/ZNSTextAttachment",
-      "state" : {
-        "revision" : "91f718caf50649d817f189eb17ad028f03fd632b",
-        "version" : "1.2.0"
+      "identity": "znstextattachment",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/ZhgChgLi/ZNSTextAttachment",
+      "state": {
+        "revision": "91f718caf50649d817f189eb17ad028f03fd632b",
+        "version": "1.2.0"
       }
     }
   ],
-  "version" : 3
+  "version": 3
 }

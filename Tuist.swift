@@ -1,9 +1,8 @@
 import ProjectDescription
 
 let tuist = Tuist(
-    fullHandle: "forpda/forpda",
     project: .tuist(
-        compatibleXcodeVersions: .list([.upToNextMajor("26.3"), .upToNextMajor("27.0")]),
+        compatibleXcodeVersions: .all,
         generationOptions: .options(
             optionalAuthentication: true
         ),
