@@ -16,6 +16,8 @@ import PersistenceKeys
 import ParsingClient
 import PasteboardClient
 import FormFeature
+import ComposerFeature
+import ForumCore
 import ReputationChangeFeature
 import TCAExtensions
 import AnalyticsClient
@@ -40,6 +42,7 @@ public struct TopicFeature: Reducer, Sendable {
     private enum Localization {
         static let linkCopied = LocalizedStringResource("Link copied", bundle: .module)
         static let reportSent = LocalizedStringResource("Report sent", bundle: .module)
+        static let postSent = LocalizedStringResource("Message sent", bundle: .module)
         static let postsMoved = LocalizedStringResource("Posts moved", bundle: .module)
         static let topicEdited = LocalizedStringResource("The topic has been edited", bundle: .module)
         static let favoriteAdded = LocalizedStringResource("Added to favorites", bundle: .module)
@@ -66,6 +69,7 @@ public struct TopicFeature: Reducer, Sendable {
         case karmaChange(Int)
         case karmaHistory(PostKarmaHistoryFeature)
         case newPost(FormFeature)
+        case composer(ComposerFeature)
         case template(FormFeature)
         case stat(ForumStatFeature)
         case move(ForumMoveFeature)
@@ -78,6 +82,7 @@ public struct TopicFeature: Reducer, Sendable {
             case alert(Alert)
             case karmaHistory(PostKarmaHistoryFeature.Action)
             case newPost(FormFeature.Action)
+            case composer(ComposerFeature.Action)
             case template(FormFeature.Action)
             case stat(ForumStatFeature.Action)
             case move(ForumMoveFeature.Action)
@@ -263,6 +268,23 @@ public struct TopicFeature: Reducer, Sendable {
                 _ = state.$postDraftsCache.withLock { $0.topics.removeValue(forKey: topicId) }
                 return jumpTo(.post(id: post.id), true, &state)
 
+            case let .destination(.presented(.composer(.delegate(.published(postId, _, _))))):
+                let topicId = state.topicId
+                state.destination = nil
+                _ = state.$postDraftsCache.withLock { $0.topics.removeValue(forKey: topicId) }
+                let toast = ToastMessage(text: Localization.postSent, haptic: .success)
+                if let postId {
+                    return .merge(
+                        .run { _ in await toastClient.showToast(toast) },
+                        jumpTo(.post(id: postId), true, &state)
+                    )
+                }
+                return .merge(.run { _ in await toastClient.showToast(toast) }, .send(.internal(.refresh)))
+                
+            case .destination(.presented(.composer(.delegate(.close)))):
+                state.destination = nil
+                return .none
+                
             case let .destination(.presented(.template(.delegate(.formSent(.post(post)))))):
                 return jumpTo(.post(id: post.id), true, &state)
 
@@ -404,15 +426,7 @@ public struct TopicFeature: Reducer, Sendable {
                 guard let topic = state.topic else { return .none }
                 switch action {
                 case .writePost:
-                    let draft = state.postDraftsCache.topics[topic.id] ?? ""
-                    let formState = FormFeature.State(
-                        type: .post(
-                            type: .new,
-                            topicId: topic.id,
-                            content: .simple(draft, [])
-                        )
-                    )
-                    state.destination = .newPost(formState)
+                    state.destination = .composer(makeComposer(state))
                     return .none
                     
                 case .writePostWithTemplate:
@@ -511,31 +525,26 @@ public struct TopicFeature: Reducer, Sendable {
             case let .view(.contextPostMenu(action)):
                 switch action {
                 case let .reply(postId, authorName):
-                    let reply = "[SNAPBACK]\(postId)[/SNAPBACK] [B]\(authorName)[/B], "
-                    let draft = state.postDraftsCache.topics[state.topicId] ?? ""
-                    let text = draft.contains(reply) ? draft : draft + reply
-                    state.$postDraftsCache.withLock { $0.topics[state.topicId] = text }
-                    let formState = FormFeature.State(
-                        type: .post(
-                            type: .new,
-                            topicId: state.topicId,
-                            content: .simple(text, [])
-                        )
-                    )
-                    state.destination = .newPost(formState)
+                    let insertion = ComposerFeature.State.PendingInsertion(kind: .reply(postId: postId, authorName: authorName))
+                    if case .composer = state.destination {
+                        return .send(.destination(.presented(.composer(.addReply(postId: postId, authorName: authorName)))))
+                    }
+                    var composer = makeComposer(state)
+                    composer.pendingInsertions = [insertion]
+                    state.destination = .composer(composer)
                     return .none
                     
                 case let .edit(post):
-                    let formState = FormFeature.State(
-                        type: .post(
-                            type: .edit(postId: post.id),
-                            topicId: state.topicId,
-                            content: .simple(post.content, post.attachments.map {
-                                .init(id: $0.id, name: $0.name, type: $0.type)
-                            })
-                        )
+                    let composer = ComposerFeature.State(
+                        target: .edit(postId: post.id, topicId: state.topicId),
+                        contextTitle: state.topic?.name ?? "",
+                        seedText: post.content,
+                        seedAttachments: post.attachments.map {
+                            .existing(serverId: $0.id, name: $0.name, isImage: $0.type == .image)
+                        },
+                        expanded: true
                     )
-                    state.destination = .newPost(formState)
+                    state.destination = .composer(composer)
                     return .none
                     
                 case let .report(id):
@@ -643,6 +652,16 @@ public struct TopicFeature: Reducer, Sendable {
                 
             case let .view(.textQuoted(post, quotedText)):
                 guard state.topic != nil else { return .none }
+                let source = QuoteSource(postId: post.id, authorName: post.post.author.name, date: post.post.createdAt)
+                if case .composer = state.destination {
+                    return .send(.destination(.presented(.composer(.addQuote(text: quotedText, source: source)))))
+                }
+                if state.destination == nil {
+                    var composer = makeComposer(state)
+                    composer.pendingInsertions = [.init(kind: .quote(text: quotedText, source: source))]
+                    state.destination = .composer(composer)
+                    return .none
+                }
                 
                 let formatter = DateFormatter()
                 formatter.dateFormat = "dd.MM.yy, HH:mm"
@@ -862,6 +881,15 @@ public struct TopicFeature: Reducer, Sendable {
             Task.cancel(id: CancelID.loading)
             await send(.internal(.loadTopic(targetOffset)))
         }
+    }
+    
+    /// Reply composer for this topic. Migrates the legacy single-string draft once.
+    private func makeComposer(_ state: State) -> ComposerFeature.State {
+        ComposerFeature.State(
+            target: .reply(topicId: state.topicId),
+            contextTitle: state.topic?.name ?? "",
+            seedText: state.postDraftsCache.topics[state.topicId] ?? ""
+        )
     }
     
     private func mergeUIPosts(old: [UIPost], newPosts: [Post], newTypes: [[UITopicType]]) -> [UIPost] {

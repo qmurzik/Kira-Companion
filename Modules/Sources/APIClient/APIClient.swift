@@ -13,12 +13,14 @@ import ParsingClient
 import CacheClient
 import ComposableArchitecture
 import PersistenceKeys
+import ForumCore
 
 public typealias APIConnectionState = ConnectionState
 public typealias UploadRequest = PDAPI.UploadRequest
 public typealias UploadProgressStatus = PDAPI.UploadProgressStatus
 public typealias PDAPIDocument = PDAPI.Document
 public typealias PDAPIError = APIError
+public typealias UploadFailureReason = PDAPI.UploadFailureReason
 
 // MARK: - Client
 
@@ -113,6 +115,12 @@ public struct APIClient: Sendable {
     
     // STREAMS
     public var connectionState: @Sendable () -> AsyncStream<ConnectionState> = { .finished }
+    /// High level status for UI banners (online / connecting / offline / unreachable).
+    public var connectionStatus: @Sendable () -> AsyncStream<ForumConnectionStatus> = { .finished }
+    /// Reset backoff and reconnect immediately (user tapped "Retry").
+    public var retryConnection: @Sendable () async -> Void = { }
+    /// Re-authenticate the socket with the current session (after login/logout).
+    public var reconnect: @Sendable () async -> Void = { }
     public var notificationStream: @Sendable () -> AsyncStream<String> = { .finished }
     
     // UPLOAD
@@ -124,6 +132,8 @@ public struct APIClient: Sendable {
 extension APIClient: DependencyKey {
     
     public static let api = API()
+    /// All traffic goes through the supervisor (reconnects, offline detection, safe retries).
+    public static let supervisor = ConnectionSupervisor(api: api)
     
     // MARK: - Live Value
     
@@ -136,18 +146,17 @@ extension APIClient: DependencyKey {
             // MARK: - Common
             
             connect: { inBackground in
-                @Shared(.userSession) var userSession
-                @Shared(.appSettings) var appSettings
-                if let userSession {
-                    let request = AuthRequest(memberId: userSession.userId, token: userSession.token, hidden: userSession.isHidden)
-                    try await api.connect(as: .account(data: request), inBackground: inBackground, route: appSettings.backupServer ? .backup : .primary)
+                await supervisor.start(loginProvider: currentLogin)
+                if inBackground {
+                    try await supervisor.connectForBackgroundTask()
                 } else {
-                    try await api.connect(as: .anonymous, route: appSettings.backupServer ? .backup : .primary)
+                    try await supervisor.activate()
                 }
             },
             
             disconnect: {
-                await api.disconnect()
+                await supervisor.setForeground(false)
+                await supervisor.disconnectAfterBackgroundTask()
             },
             
             setLogResponses: { type in
@@ -155,19 +164,19 @@ extension APIClient: DependencyKey {
             },
             
             notify: { token, settings, isDebug in
-                let response = try await api.send(CommonCommand.notify(
+                let response = try await supervisor.send(CommonCommand.notify(
                     token: token,
                     a: settings.rawValue,
                     b: isDebug ? 0x0103 : 3
-                ))
-                let status = Int(response.getResponseStatus())!
+                ), idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
             // MARK: - Articles
             
             getArticlesList: { offset, amount in
-                let response = try await api.send(SiteCommand.articlesList(offset: offset, amount: amount))
+                let response = try await supervisor.send(SiteCommand.articlesList(offset: offset, amount: amount))
                 return try await parser.parseArticlesList(response)
             },
             
@@ -177,7 +186,7 @@ extension APIClient: DependencyKey {
                     setCache: { await cache.setArticle($0) },
                     remote: {
                         let command = SiteCommand.article(id: id)
-                        let response = try await api.send(command)
+                        let response = try await supervisor.send(command)
                         return try await parser.parseArticle(response)
                     },
                     policy: policy
@@ -185,19 +194,19 @@ extension APIClient: DependencyKey {
             },
             
             likeComment: { articleId, commentId in
-                let response = try await api.send(SiteCommand.articleCommentLike(articleId: articleId, commentId: commentId))
+                let response = try await supervisor.send(SiteCommand.articleCommentLike(articleId: articleId, commentId: commentId), idempotent: false)
                 return Int(response.getResponseStatus()) == 0
             },
             
             hideComment: { articleId, commentId in
-                let response = try await api.send(SiteCommand.articleCommentHide(articleId: articleId, commentId: commentId))
+                let response = try await supervisor.send(SiteCommand.articleCommentHide(articleId: articleId, commentId: commentId), idempotent: false)
                 // Getting 3 on liked comment
                 return Int(response.getResponseStatus()) == 0
             },
             
             replyToComment: { articleId, parentId, message in
-                let response = try await api.send(SiteCommand.articleComment(articleId: articleId, parentId: parentId, msg: message))
-                let responseAsInt = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(SiteCommand.articleComment(articleId: articleId, parentId: parentId, msg: message), idempotent: false)
+                let responseAsInt = try response.responseStatusCode()
                 if CommentResponseType.codes.contains(responseAsInt) {
                     return CommentResponseType(rawValue: responseAsInt) ?? .unknown
                 } else {
@@ -206,8 +215,8 @@ extension APIClient: DependencyKey {
             },
             
             voteInPoll: { pollId, selections in
-                let response = try await api.send(SiteCommand.vote(pollId: pollId, selections: selections))
-                let responseAsInt = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(SiteCommand.vote(pollId: pollId, selections: selections), idempotent: false)
+                let responseAsInt = try response.responseStatusCode()
                 return responseAsInt == 0
             },
             
@@ -215,19 +224,19 @@ extension APIClient: DependencyKey {
             
             getCaptcha: {
                 let request = LoginRequest(name: "", password: "", hidden: false)
-                let response = try await api.send(AuthCommand.login(data: request))
+                let response = try await supervisor.send(AuthCommand.login(data: request))
                 return try await parser.parseCaptchaUrl(response)
             },
             
             authorize: { login, password, hidden, captcha in
                 let request = LoginRequest(name: login, password: password, hidden: hidden, captcha: captcha)
-                let response = try await api.send(AuthCommand.login(data: request))
+                let response = try await supervisor.send(AuthCommand.login(data: request), idempotent: false)
                 return try await parser.parseLogin(response)
             },
             
             logout: {
                 let request = AuthRequest(memberId: 0, token: "", hidden: false)
-                _ = try await api.send(AuthCommand.auth(data: request))
+                _ = try await supervisor.send(AuthCommand.auth(data: request), idempotent: false)
             },
             
             // MARK: - User
@@ -238,7 +247,7 @@ extension APIClient: DependencyKey {
                     setCache: { await cache.setUser($0) },
                     remote: {
                         let command = MemberCommand.info(memberId: userId)
-                        let response = try await api.send(command)
+                        let response = try await supervisor.send(command)
                         return try await parser.parseUser(response)
                     },
                     policy: policy
@@ -256,14 +265,14 @@ extension APIClient: DependencyKey {
                         birthday: request.birthdayDate
                     )
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             addUserNote: { userId, message in
                 let command = MemberCommand.notice(memberId: userId, message: message)
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return UserNoteResponse(rawValue: status)
             },
             getReputationVotes: { request in
@@ -273,7 +282,7 @@ extension APIClient: DependencyKey {
                     offset: request.offset,
                     count: request.amount
                 ))
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseReputationVotes(response)
             },
             
@@ -284,8 +293,8 @@ extension APIClient: DependencyKey {
                     postId: id,
                     reason: ""
                 ))
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             changeReputation: { request in
@@ -295,13 +304,13 @@ extension APIClient: DependencyKey {
                     postId: request.transferContentType,
                     reason: request.reason
                 ))
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return ReputationChangeResponseType(rawValue: status)
             },
             updateUserAvatar: { userId, image in
                 let command = MemberCommand.avatar(memberId: userId, avatar: image)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command, idempotent: false)
                 return try await parser.parseAvatarUrl(response: response)
             },
             updateUserDevice: { userId, action, fullTag, isPrimary in
@@ -316,14 +325,14 @@ extension APIClient: DependencyKey {
                     fullTag: fullTag,
                     primary: isPrimary
                 ))
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
             getUserPunishmentTemplates: { forId, userId in
                 let command = MemberCommand.Punishment.templates(forId: forId, memberId: userId)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseUserPunishmentTemplates(response)
             },
             applyUserPunishment: { data in
@@ -338,21 +347,21 @@ extension APIClient: DependencyKey {
                     violationCategory: data.categoryId,
                     violationType: data.template.id
                 ))
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return UserPunishmentApplyResponse(rawValue: status) ?? .noAccess
             },
             cancelUserPunishment: { userId, reason in
                 let command = MemberCommand.Punishment.cancel(memberId: userId, reason: reason)
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
             // MARK: - Bookmarks
             
             getBookmarksList: {
-                let response = try await api.send(MemberCommand.Bookmarks.list)
+                let response = try await supervisor.send(MemberCommand.Bookmarks.list)
                 return try await parser.parseBookmarksList(response)
             },
             
@@ -363,7 +372,7 @@ extension APIClient: DependencyKey {
                     getCache: { await cache.getForumsList() },
                     setCache: { await cache.setForumsList($0) },
                     remote: {
-                        let response = try await api.send(ForumCommand.list)
+                        let response = try await supervisor.send(ForumCommand.list)
                         return try await parser.parseForumsList(response)
                     },
                     policy: policy
@@ -376,7 +385,7 @@ extension APIClient: DependencyKey {
                     setCache: { await cache.setForum(id, $0) },
                     remote: {
                         let command = ForumCommand.view(id: id, offset: offset, itemsPerPage: perPage)
-                        let response = try await api.send(command)
+                        let response = try await supervisor.send(command)
                         return try await parser.parseForum(response)
                     },
                     policy: policy
@@ -385,13 +394,13 @@ extension APIClient: DependencyKey {
             
             getForumStat: { id in
                 let command = ForumCommand.info(id: id)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseForumStat(response)
             },
             
             getForumEventLog: { id, type in
                 let command = ForumCommand.eventLog(type: type.rawValue, id: id)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseForumEventLog(response)
             },
             
@@ -402,19 +411,19 @@ extension APIClient: DependencyKey {
                     postsFilter: request.postsFilter.rawValue,
                     topicId: request.topicId
                 ))
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseForumJump(response)
             },
             
             markRead: { id, isTopic in
                 let command = ForumCommand.markRead(ids: [id], isTopics: isTopic)
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
             getAnnouncement: { id in
-                let response = try await api.send(ForumCommand.announcement(linkId: id))
+                let response = try await supervisor.send(ForumCommand.announcement(linkId: id))
                 return try await parser.parseAnnouncement(response)
             },
             
@@ -425,7 +434,7 @@ extension APIClient: DependencyKey {
                     itemsPerPage: perPage,
                     showPostMode: postsFilter.rawValue
                 )
-                let response = try await api.send(ForumCommand.Topic.view(data: request))
+                let response = try await supervisor.send(ForumCommand.Topic.view(data: request))
                 return try await parser.parseTopic(response)
             },
             modifyForum: { ids, type, isUndo in
@@ -434,8 +443,8 @@ extension APIClient: DependencyKey {
                     type: type.transfer,
                     isUndo: isUndo
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             moveTopics: { ids, toForumId, saveLink in
@@ -444,8 +453,8 @@ extension APIClient: DependencyKey {
                     toForumId: toForumId,
                     saveLink: saveLink
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             mergeTopics: { ids, targetId in
@@ -453,8 +462,8 @@ extension APIClient: DependencyKey {
                     ids: ids,
                     targetId: targetId
                 )
-                let response = try await api.send(command)
-                let topicId = Int(response.getResponseComponent(number: 2))!
+                let response = try await supervisor.send(command, idempotent: false)
+                let topicId = try response.responseInt(at: 2)
                 return topicId
             },
             editTopic: { data in
@@ -464,8 +473,8 @@ extension APIClient: DependencyKey {
                     description: data.description,
                     poll: data.poll
                 )
-                let response = try await api.send(ForumCommand.Topic.edit(data: request))
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(ForumCommand.Topic.edit(data: request), idempotent: false)
+                let status = try response.responseStatusCode()
                 return TopicEditResponse(rawValue: status)
             },
             getTopicViewers: { topicId in
@@ -473,7 +482,7 @@ extension APIClient: DependencyKey {
                     pageType: .topic,
                     pageId: topicId
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseTopicViewers(response)
             },
             setTopicCurator: { topicId, userId, reason in
@@ -482,8 +491,8 @@ extension APIClient: DependencyKey {
                     memberId: userId,
                     reason: reason
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
@@ -492,7 +501,7 @@ extension APIClient: DependencyKey {
                     type: isTopic ? .topic(forumId: request.id) : .post(topicId: request.id),
                     action: request.action.transferType
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseWriteForm(response)
             },
             sendTemplate: { id, content, isTopic in
@@ -500,17 +509,17 @@ extension APIClient: DependencyKey {
                     type: isTopic ? .topic(forumId: id) : .post(topicId: id),
                     action: .send(content)
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command, idempotent: false)
                 return try await parser.parseTemplateSend(response: response)
             },
             
 			getHistory: { offset, perPage in
-                let response = try await api.send(MemberCommand.history(page: offset, perPage: perPage))
+                let response = try await supervisor.send(MemberCommand.history(page: offset, perPage: perPage), idempotent: false)
                 return try await parser.parseHistory(response)
 			},
             
             getMentions: { showPosts, offset, perPage in
-                let response = try await api.send(MemberCommand.mention(showPosts: showPosts, offset: offset, itemsPerPage: perPage))
+                let response = try await supervisor.send(MemberCommand.mention(showPosts: showPosts, offset: offset, itemsPerPage: perPage))
                 return try await parser.parseMentions(response)
             },
             
@@ -521,7 +530,7 @@ extension APIClient: DependencyKey {
                     attaches: request.post.attachments,
                     flag: request.post.flag
                 ), postId: request.id)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parsePostPreview(response)
             },
             previewTemplate: { id, content, isTopic in
@@ -529,7 +538,7 @@ extension APIClient: DependencyKey {
                     type: isTopic ? .topic(forumId: id) : .post(topicId: id),
                     action: .preview(content)
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseTemplatePreview(response: response)
             },
             
@@ -540,7 +549,7 @@ extension APIClient: DependencyKey {
                     attaches: request.attachments,
                     flag: request.flag
                 ))
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command, idempotent: false)
                 return try await parser.parsePostSendResponse(response)
             },
             
@@ -555,14 +564,14 @@ extension APIClient: DependencyKey {
                     postId: request.postId,
                     reason: request.reason
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command, idempotent: false)
                 return try await parser.parsePostSendResponse(response)
 			},
             
             movePosts: { ids, toTopicId in
                 let command = ForumCommand.Post.move(ids: ids, toTopicId: toTopicId)
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
@@ -571,20 +580,20 @@ extension APIClient: DependencyKey {
                     postId: id,
                     action: isUp ? .plus : .minus
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             postKarmaHistory: { postId in
                 let command = ForumCommand.Post.karma(postId: postId, action: .history)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parsePostKarmaHistory(response)
             },
             
             voteInTopicPoll: { topicId, selections in
                 let command = ForumCommand.Topic.Poll.vote(topicId: topicId, selections: selections)
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
@@ -600,7 +609,7 @@ extension APIClient: DependencyKey {
                             offset: request.offset,
                             perPage: request.perPage
                         )
-                        let response = try await api.send(command)
+                        let response = try await supervisor.send(command)
                         let favorites = try await parser.parseFavorites(response)
                         await cache.setFavorites(favorites)
                         return favorites
@@ -615,8 +624,8 @@ extension APIClient: DependencyKey {
                     type: request.transferType,
                     action: request.transferAction
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
@@ -626,14 +635,14 @@ extension APIClient: DependencyKey {
                     flag: request.flag,
                     new: request.transferType
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
             readAllFavorites: {
-                let response = try await api.send(MemberCommand.Favorites.readAll)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(MemberCommand.Favorites.readAll, idempotent: false)
+                let status = try response.responseStatusCode()
                 return status == 0
             },
             
@@ -645,7 +654,7 @@ extension APIClient: DependencyKey {
                 } else {
                     CommonCommand.syncUnread(timestamp: 0, type: 0, value: 0)
                 }
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseUnread(response)
             },
             
@@ -654,9 +663,10 @@ extension APIClient: DependencyKey {
                     getCache: { cache.getAttachmentURL(id) },
                     setCache: { cache.setAttachmentURL(id, $0) },
                     remote: {
-                        let response = try await api.send(ForumCommand.attachmentDownloadUrl(id: id))
+                        let response = try await supervisor.send(ForumCommand.attachmentDownloadUrl(id: id))
                         let urlString = String(response.dropFirst(10).dropLast(2))
-                        return URL(string: urlString)!
+                        guard let url = URL(string: urlString) else { throw ResponseFormatError.notANumber(urlString) }
+                        return url
                     },
                     policy: .cacheOrLoad
                 )
@@ -670,8 +680,8 @@ extension APIClient: DependencyKey {
                     id: request.id,
                     message: request.message
                 )
-                let response = try await api.send(command)
-                let status = Int(response.getResponseStatus())!
+                let response = try await supervisor.send(command, idempotent: false)
+                let status = try response.responseStatusCode()
                 return ReportResponseType(rawValue: status)
             },
 
@@ -686,7 +696,7 @@ extension APIClient: DependencyKey {
                     offset: request.offset,
                     amount: request.amount
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseSearch(response)
             },
             searchUsers: { request in
@@ -695,7 +705,7 @@ extension APIClient: DependencyKey {
                     offset: request.offset,
                     number: request.number
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseSearchUsers(response)
             },
             
@@ -703,7 +713,7 @@ extension APIClient: DependencyKey {
             
             deviceBrands: { type in
                 let command = DeviceCommand.type(typeCode: type.transferType)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseDeviceBrands(response)
             },
             deviceVendor: { name, type in
@@ -711,19 +721,41 @@ extension APIClient: DependencyKey {
                     typeCode: type.transferType,
                     vendorCode: name
                 )
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseDeviceVendor(response)
             },
             deviceSpecifications: { tag, subTag in
                 let command = DeviceCommand.entry(tag: tag, subTag: subTag)
-                let response = try await api.send(command)
+                let response = try await supervisor.send(command)
                 return try await parser.parseDeviceSpecifications(response: response)
             },
             
             // MARK: - Streams
             
             connectionState: {
-                return api.stateStream
+                AsyncStream { continuation in
+                    let task = Task {
+                        for await state in await supervisor.stateStream() { continuation.yield(state) }
+                        continuation.finish()
+                    }
+                    continuation.onTermination = { _ in task.cancel() }
+                }
+            },
+            connectionStatus: {
+                AsyncStream { continuation in
+                    let task = Task {
+                        for await status in await supervisor.statusStream() { continuation.yield(status) }
+                        continuation.finish()
+                    }
+                    continuation.onTermination = { _ in task.cancel() }
+                }
+            },
+            retryConnection: {
+                await supervisor.retryNow()
+            },
+            reconnect: {
+                await supervisor.start(loginProvider: currentLogin)
+                await supervisor.reconnectWithCurrentSession()
             },
             
             notificationStream: {
@@ -733,9 +765,21 @@ extension APIClient: DependencyKey {
             // MARK: - Upload
             
             upload: { request in
-                return await api.upload(request: request)
+                return await supervisor.upload(request)
             }
         )
+    }
+    
+    /// Credentials for the next (re)connect, read fresh every time.
+    @Sendable static func currentLogin() -> (login: LoginType, route: ConnectionRoute) {
+        @Shared(.userSession) var userSession
+        @Shared(.appSettings) var appSettings
+        let route: ConnectionRoute = appSettings.backupServer ? .backup : .primary
+        if let userSession {
+            let request = AuthRequest(memberId: userSession.userId, token: userSession.token, hidden: userSession.isHidden)
+            return (.account(data: request), route)
+        }
+        return (.anonymous, route)
     }
     
     // MARK: - Preview Value
@@ -1041,9 +1085,7 @@ extension String {
     }
     
     func getResponseComponent(number: Int) -> String {
-        return self
-            .replacingOccurrences(of: "[", with: "")
-            .replacingOccurrences(of: "]", with: "")
-            .components(separatedBy: ",")[number]
+        let parts = responseComponents()
+        return parts.indices.contains(number) ? parts[number] : ""
     }
 }

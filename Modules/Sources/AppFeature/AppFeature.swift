@@ -95,6 +95,8 @@ public struct AppFeature: Reducer, Sendable {
         }
         
         public var connectionState: APIConnectionState?
+        /// User-facing connection status (banner with "Retry").
+        public var connectionStatus: ForumConnectionStatus = .online
         public var isNetworkOnline = true
         
         public init(
@@ -154,6 +156,8 @@ public struct AppFeature: Reducer, Sendable {
         case updateBadges(Unread)
         
         case connectionStateChanged(APIConnectionState)
+        case connectionStatusChanged(ForumConnectionStatus)
+        case retryConnectionTapped
         case networkStateChanged(Bool)
         case receivedNotification(String)
         
@@ -169,6 +173,7 @@ public struct AppFeature: Reducer, Sendable {
     
     enum CancelID {
         case showToast
+        case backgroundDisconnect
     }
     
     // MARK: - Dependencies
@@ -238,6 +243,12 @@ public struct AppFeature: Reducer, Sendable {
                     },
                     
                     .run { send in
+                        for await status in apiClient.connectionStatus() {
+                            await send(.connectionStatusChanged(status))
+                        }
+                    },
+                    
+                    .run { send in
                         for await notification in apiClient.notificationStream() {
                             await send(.receivedNotification(notification))
                         }
@@ -255,6 +266,16 @@ public struct AppFeature: Reducer, Sendable {
                         }
                     }
                 )
+                
+            case let .connectionStatusChanged(status):
+                state.connectionStatus = status
+                return .none
+                
+            case .retryConnectionTapped:
+                return .run { _ in
+                    await hapticClient.play(.light)
+                    await apiClient.retryConnection()
+                }
                 
             case let .connectionStateChanged(connectionState):
                 state.connectionState = connectionState
@@ -443,24 +464,44 @@ public struct AppFeature: Reducer, Sendable {
                 
             case let .scenePhaseDidChange(from: _, to: newPhase):
                 let isLoggedIn = state.userSession != nil
-                return .run { send in
-                    if newPhase == .active {
-                        try? await apiClient.connect(inBackground: false)
-                        notificationCenter.post(name: .sceneBecomeActive, object: nil)
-                        
-                        if isLoggedIn {
-                            let unread = try await apiClient.getUnread(type: .all)
-                            await notificationsClient.showUnreadNotifications(unread)
+                if newPhase == .active {
+                    // Cancel a pending background disconnect first: the supervisor serialises
+                    // connect/disconnect, so there is no race between the two any more.
+                    return .merge(
+                        .cancel(id: CancelID.backgroundDisconnect),
+                        .run { send in
+                            // Errors are not swallowed silently any more: the supervisor keeps
+                            // reconnecting with backoff and the banner shows the status.
+                            do {
+                                try await apiClient.connect(inBackground: false)
+                            } catch {
+                                logger.error("Foreground connect: \(error.localizedDescription)")
+                            }
+                            notificationCenter.post(name: .sceneBecomeActive, object: nil)
+                            
+                            if isLoggedIn {
+                                let unread = try await apiClient.getUnread(type: .all)
+                                await notificationsClient.showUnreadNotifications(unread)
+                            }
                         }
-                    }
-                    
-                    if newPhase == .background {
+                    )
+                }
+                
+                if newPhase == .background {
+                    return .run { send in
                         if isLoggedIn {
                             await send(.registerBackgroundTask)
                         }
+                        // Grace period so an in-flight post / upload can finish when the user
+                        // briefly switches apps. Cancelled when the app becomes active again.
+                        let taskId = await UIApplication.shared.beginBackgroundTask(withName: "forpda.disconnect")
+                        defer { Task { @MainActor in UIApplication.shared.endBackgroundTask(taskId) } }
+                        try await Task.sleep(for: .seconds(8))
                         await apiClient.disconnect()
                     }
+                    .cancellable(id: CancelID.backgroundDisconnect, cancelInFlight: true)
                 }
+                return .none
                 
             case .registerBackgroundTask:
                 // return .send(.syncUnreadTaskInvoked) // For test purposes

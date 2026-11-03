@@ -36,7 +36,7 @@ extension Backport where Content: View {
         }
     }
     
-    @ContentBuilder
+    @ViewBuilder
     public func scrollBounceBehavior(_ behavior: ScrollBounceBehavior, axes: Axis.Set = [.vertical]) -> some View {
         if #available(iOS 16.4, *) {
             content
@@ -92,7 +92,7 @@ extension Backport where Content: View {
         }
     }
     
-    @ContentBuilder
+    @ViewBuilder
     public func presentationBackgroundInteraction(_ interaction: PresentationBackgroundInteraction) -> some View {
         if #available(iOS 16.4, *) {
             content

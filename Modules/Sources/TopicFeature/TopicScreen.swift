@@ -9,6 +9,7 @@ import SwiftUI
 import ComposableArchitecture
 import PageNavigationFeature
 import FormFeature
+import ComposerFeature
 import SFSafeSymbols
 import SharedUI
 import NukeUI
@@ -65,7 +66,7 @@ public struct TopicScreen: View {
     
     private var isNewPostPresented: Bool {
         switch store.destination {
-        case .newPost:
+        case .newPost, .composer:
             return true
         default:
             return false
@@ -611,6 +612,9 @@ struct NavigationModifier: ViewModifier {
                     NavigationStack {
                         ForumStatView(store: store)
                     }
+                }
+                .sheet(item: $store.scope(\.$destination, action: \.destination).composer) { store in
+                    ComposerScreen(store: store)
                 }
                 .sheet(item: $store.scope(\.$destination, action: \.destination).newPost) { store in
                     NavigationStack {

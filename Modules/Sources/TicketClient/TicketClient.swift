@@ -26,8 +26,9 @@ public struct TicketClient: Sendable {
 
 extension TicketClient: DependencyKey {
     
-    private static var api: API {
-        return APIClient.api
+    /// Routed through the connection supervisor (reconnects, offline detection, safe retries).
+    private static var api: ConnectionSupervisor {
+        return APIClient.supervisor
     }
     
     // MARK: - Live Value
@@ -58,7 +59,7 @@ extension TicketClient: DependencyKey {
                     id: ticketId,
                     handlerId: handlerId,
                     statusCode: status.rawValue
-                ))
+                ), idempotent: false)
                 return try await parser.parseChangeTicketStatus(response)
             },
             
@@ -67,7 +68,7 @@ extension TicketClient: DependencyKey {
                     id: id,
                     ticketId: ticketId,
                     text: text
-                ))
+                ), idempotent: false)
                 let status = Int(response.getResponseStatus())
                 return status == 0
             },
@@ -75,7 +76,7 @@ extension TicketClient: DependencyKey {
                 let response = try await api.send(TicketCommand.Comment.delete(
                     id: id,
                     ticketId: ticketId
-                ))
+                ), idempotent: false)
                 let status = Int(response.getResponseStatus())
                 return status == 0
             }

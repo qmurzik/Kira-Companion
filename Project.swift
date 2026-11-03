@@ -677,6 +677,8 @@ let project = Project(
             .feature(
                 name: "TopicFeature",
                 dependencies: [
+                    .Internal.ComposerFeature,
+                    .SPM.ForumCore,
                     .Internal.AnalyticsClient,
                     .Internal.APIClient,
                     .Internal.CacheClient,
@@ -727,6 +729,22 @@ let project = Project(
             ),
         
             .feature(
+                name: "ComposerFeature",
+                hasTests: true,
+                hasResources: false,
+                dependencies: [
+                    .Internal.APIClient,
+                    .Internal.Models,
+                    .Internal.PersistenceKeys,
+                    .Internal.QMSClient,
+                    .Internal.SharedUI,
+                    .Internal.TopicBuilder,
+                    .SPM.ForumCore,
+                    .SPM.TCA,
+                ]
+            ),
+        
+            .feature(
                 name: "FormFeature",
                 hasTests: true,
                 dependencies: [
@@ -750,6 +768,7 @@ let project = Project(
                 name: "APIClient",
                 hasResources: false,
                 dependencies: [
+                    .SPM.ForumCore,
                     .Internal.CacheClient,
                     .Internal.Models,
                     .Internal.ParsingClient,
@@ -955,6 +974,17 @@ let project = Project(
                 .Internal.BBBuilder,
                 .Internal.Models,
                 .Internal.SharedUI
+            ]
+        ),
+        
+        .tests(
+            name: "ComposerFeature",
+            dependencies: [
+                .Internal.APIClient,
+                .Internal.ComposerFeature,
+                .Internal.Models,
+                .SPM.ForumCore,
+                .SPM.TCA
             ]
         ),
         
@@ -1316,6 +1346,7 @@ extension TargetDependency.Internal {
     static let TopicBuilder =           TargetDependency.target(name: "TopicBuilder")
     static let TopicEditFeature =       TargetDependency.target(name: "TopicEditFeature")
     static let TopicFeature =           TargetDependency.target(name: "TopicFeature")
+    static let ComposerFeature =        TargetDependency.target(name: "ComposerFeature")
     static let UploadBoxFeature =       TargetDependency.target(name: "UploadBoxFeature")
     static let UserPunishmentFeature =  TargetDependency.target(name: "UserPunishmentFeature")
     

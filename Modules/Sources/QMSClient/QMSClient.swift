@@ -22,6 +22,8 @@ public struct QMSClient: Sendable {
     public var deleteAllChats: @Sendable (_ userId: Int) async throws -> String
     public var deleteChat: @Sendable (_ chatId: Int) async throws -> String
     public var sendMessage: @Sendable (_ chatId: Int, _ message: String) async throws -> Void
+    /// The server accepts uploaded attachment ids together with the message (PDAPI `attaches`).
+    public var sendMessageWithAttachments: @Sendable (_ chatId: Int, _ message: String, _ attachments: [Int]) async throws -> Void = { _, _, _ in }
     public var deleteMessage: @Sendable (_ chatId: Int, _ messageId: Int, _ forAll: Bool) async throws -> String
     public var blacklist: @Sendable () async throws -> String
     public var addToBlacklist: @Sendable (_ id: Int, _ add: Bool) async throws -> String
@@ -29,8 +31,9 @@ public struct QMSClient: Sendable {
 
 extension QMSClient: DependencyKey {
     
-    private static var api: API {
-        return APIClient.api
+    /// Routed through the connection supervisor (reconnects, offline detection, safe retries).
+    private static var api: ConnectionSupervisor {
+        return APIClient.supervisor
     }
     
     // MARK: - Live Value
@@ -55,26 +58,30 @@ extension QMSClient: DependencyKey {
             },
             
             createChat: { opponentId, title, message in
-                let response = try await api.send(QMSCommand.Dialog.create(title: title, message: message, opponentId: opponentId))
+                let response = try await api.send(QMSCommand.Dialog.create(title: title, message: message, opponentId: opponentId), idempotent: false)
                 return response
             },
             
             deleteAllChats: { userId in
-                let response = try await api.send(QMSCommand.delete(dialogId: 0, messageId: userId, forAll: false))
+                let response = try await api.send(QMSCommand.delete(dialogId: 0, messageId: userId, forAll: false), idempotent: false)
                 return response
             },
             
             deleteChat: { chatId in
-                let response = try await api.send(QMSCommand.delete(dialogId: chatId, messageId: 0, forAll: false))
+                let response = try await api.send(QMSCommand.delete(dialogId: chatId, messageId: 0, forAll: false), idempotent: false)
                 return response
             },
             
             sendMessage: { chatId, message in
-                let _ = try await api.send(QMSCommand.Message.send(message: message, dialogId: chatId, attaches: []))
+                let _ = try await api.send(QMSCommand.Message.send(message: message, dialogId: chatId, attaches: []), idempotent: false)
+            },
+            
+            sendMessageWithAttachments: { chatId, message, attachments in
+                let _ = try await api.send(QMSCommand.Message.send(message: message, dialogId: chatId, attaches: attachments), idempotent: false)
             },
             
             deleteMessage: { chatId, messageId, forAll in
-                let response = try await api.send(QMSCommand.delete(dialogId: chatId, messageId: messageId, forAll: forAll))
+                let response = try await api.send(QMSCommand.delete(dialogId: chatId, messageId: messageId, forAll: forAll), idempotent: false)
                 return response
             },
             
@@ -84,7 +91,7 @@ extension QMSClient: DependencyKey {
             },
             
             addToBlacklist: { id, add in
-                let response = try await api.send(QMSCommand.toBlackList(opponentId: id, add: add))
+                let response = try await api.send(QMSCommand.toBlackList(opponentId: id, add: add), idempotent: false)
                 return response
             }
         )
