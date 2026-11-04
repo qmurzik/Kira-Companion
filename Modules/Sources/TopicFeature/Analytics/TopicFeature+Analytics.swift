@@ -36,6 +36,7 @@ extension TopicFeature {
                         .internal(.changeKarma),
                         .internal(.voteInPoll),
                         .internal(.load),
+                        .internal(.restoreReadingPosition),
                         .internal(.refresh),
                         .destination,
                         .delegate,
