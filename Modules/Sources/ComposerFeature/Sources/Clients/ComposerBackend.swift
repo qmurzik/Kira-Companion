@@ -14,6 +14,7 @@ import Models
 import ForumCore
 import TopicBuilder
 import SharedUI
+import PersistenceKeys
 
 public enum ComposerTarget: Equatable, Sendable {
     case reply(topicId: Int)

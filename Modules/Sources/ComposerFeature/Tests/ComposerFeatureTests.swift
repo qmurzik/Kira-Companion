@@ -8,6 +8,7 @@
 import XCTest
 import ComposableArchitecture
 import ForumCore
+import Models
 @testable import ComposerFeature
 
 @MainActor

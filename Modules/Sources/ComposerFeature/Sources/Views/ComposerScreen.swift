@@ -49,7 +49,8 @@ public struct ComposerScreen: View {
                             canSend: store.canSend,
                             isBusy: store.isBusy,
                             onPrompt: { kind in
-                                promptText = kind == .link ? (UIPasteboard.general.hasURLs ? (UIPasteboard.general.url?.absoluteString ?? "") : "") : ""
+                                // Don't read the clipboard here: it would trigger iOS's paste-permission prompt.
+                                promptText = ""
                                 prompt = kind
                             },
                             onAttachPhoto: { isPhotoPickerPresented = true },
