@@ -987,6 +987,11 @@ extension APIClient: DependencyKey {
             connectionState: {
                 return .finished
             },
+            connectionStatus: {
+                AsyncStream { $0.yield(.online); $0.finish() }
+            },
+            retryConnection: { },
+            reconnect: { },
             notificationStream: {
                 return .finished
             },
