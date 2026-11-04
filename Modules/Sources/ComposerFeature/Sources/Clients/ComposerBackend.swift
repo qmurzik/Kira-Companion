@@ -146,36 +146,41 @@ extension ComposerBackend: DependencyKey {
                 }
             },
             upload: { name, data, isQMS in
-                AsyncThrowingStream { continuation in
-                    let task = Task {
-                        do {
-                            for try await status in await api.upload(UploadRequest(fileName: name, fileData: data, isQms: isQMS)) {
-                                switch status {
-                                case let .initialized(md5, _):
-                                    continuation.yield(UploadEvent(kind: .initialized(md5: md5)))
-                                case let .uploading(percent):
-                                    continuation.yield(UploadEvent(kind: .progress(Double(percent) / 100)))
-                                case let .done(response):
-                                    if let id = try? response.responseInt(at: 2) {
-                                        continuation.yield(UploadEvent(kind: .done(serverId: id)))
-                                    } else {
-                                        continuation.yield(UploadEvent(kind: .failed("Сервер не вернул идентификатор файла")))
-                                    }
-                                case let .error(reason):
-                                    continuation.yield(UploadEvent(kind: .failed(Self.message(for: reason))))
-                                @unknown default:
-                                    continuation.yield(UploadEvent(kind: .failed("Неизвестная ошибка загрузки")))
-                                }
-                            }
-                            continuation.finish()
-                        } catch {
-                            continuation.finish(throwing: error)
+                let (stream, continuation) = AsyncThrowingStream<UploadEvent, any Error>.makeStream()
+                let apiClient = api
+                let task = Task {
+                    do {
+                        let request = UploadRequest(fileName: name, fileData: data, isQms: isQMS)
+                        for try await status in await apiClient.upload(request) {
+                            continuation.yield(Self.event(for: status))
                         }
+                        continuation.finish()
+                    } catch {
+                        continuation.finish(throwing: error)
                     }
-                    continuation.onTermination = { _ in task.cancel() }
                 }
+                continuation.onTermination = { _ in task.cancel() }
+                return stream
             }
         )
+    }
+    
+    static func event(for status: UploadProgressStatus) -> UploadEvent {
+        switch status {
+        case let .initialized(md5, _):
+            return UploadEvent(kind: .initialized(md5: md5))
+        case let .uploading(percent):
+            return UploadEvent(kind: .progress(Double(percent) / 100))
+        case let .done(response):
+            if let id = try? response.responseInt(at: 2) {
+                return UploadEvent(kind: .done(serverId: id))
+            }
+            return UploadEvent(kind: .failed("Сервер не вернул идентификатор файла"))
+        case let .error(reason):
+            return UploadEvent(kind: .failed(message(for: reason)))
+        @unknown default:
+            return UploadEvent(kind: .failed("Неизвестная ошибка загрузки"))
+        }
     }
     
     static func outcome(_ response: PostSendResponse) -> PublishOutcome {
