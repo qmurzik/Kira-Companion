@@ -19,9 +19,9 @@ public struct ReadingSettingsView: View {
     @AppStorage(ReadingPreferences.contentWidthKey) private var contentWidth: Double = 0
     @AppStorage(ReadingPreferences.densityKey) private var density: String = InterfaceDensity.regular.rawValue
     @AppStorage(ReadingPreferences.avatarSizeKey) private var avatarScale: Double = 1
-    @AppStorage("composer.showCharacterCount") private var showCharacterCount = false
-    @AppStorage("composer.highlightTags") private var highlightTags = true
-    @AppStorage("composer.fontScale") private var composerFontScale: Double = 1
+    @AppStorage("composerShowCharacterCount") private var showCharacterCount = false
+    @AppStorage("composerHighlightTags") private var highlightTags = true
+    @AppStorage("composerFontScale") private var composerFontScale: Double = 1
     
     @Shared(.appSettings) private var appSettings: AppSettings
     
@@ -121,7 +121,7 @@ enum SettingsBackup {
     static let defaultsKeys = [
         ReadingPreferences.fontScaleKey, ReadingPreferences.lineSpacingKey, ReadingPreferences.contentWidthKey,
         ReadingPreferences.densityKey, ReadingPreferences.avatarSizeKey,
-        "composer.showCharacterCount", "composer.highlightTags", "composer.fontScale"
+        "composerShowCharacterCount", "composerHighlightTags", "composerFontScale"
     ]
     
     struct Payload: Codable {
@@ -162,7 +162,7 @@ enum SettingsBackup {
         let data = try Data(contentsOf: url)
         let payload = try JSONDecoder().decode(Payload.self, from: data)
         for (key, value) in payload.defaults where defaultsKeys.contains(key) {
-            if key.hasPrefix("composer.show") || key == "composer.highlightTags" {
+            if key == "composerShowCharacterCount" || key == "composerHighlightTags" {
                 UserDefaults.standard.set(value != 0, forKey: key)
             } else {
                 UserDefaults.standard.set(value, forKey: key)

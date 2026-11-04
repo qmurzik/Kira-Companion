@@ -86,9 +86,9 @@ public struct ComposerFeature: Sendable {
         /// Set after a confirmed publication or an explicit discard: nothing is saved any more.
         public var isFinished = false
         @Presents public var alert: AlertState<Action.Alert>?
-        @Shared(.appStorage("composer.showCharacterCount")) public var showCharacterCount = false
-        @Shared(.appStorage("composer.highlightTags")) public var highlightTags = true
-        @Shared(.appStorage("composer.fontScale")) public var fontScale: Double = 1.0
+        @Shared(.appStorage("composerShowCharacterCount")) public var showCharacterCount = false
+        @Shared(.appStorage("composerHighlightTags")) public var highlightTags = true
+        @Shared(.appStorage("composerFontScale")) public var fontScale: Double = 1.0
         @Shared(.userSession) var userSession: UserSession?
 
         public var draftKey: DraftKey { target.draftKey }
