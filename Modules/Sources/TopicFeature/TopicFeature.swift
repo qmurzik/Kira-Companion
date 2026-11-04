@@ -706,7 +706,8 @@ public struct TopicFeature: Reducer, Sendable {
                 
             case .internal(.load) where state.goTo == .unread && state.appSettings.topicOpeningStrategy == .lastRead:
                 return .run { [topicId = state.topicId] send in
-                    await send(.internal(.restoreReadingPosition(await Self.readingStore.position(forTopic: topicId))))
+                    let position = await Self.readingStore.position(forTopic: topicId)
+                    await send(.internal(.restoreReadingPosition(position)))
                 }
                 
             case let .internal(.restoreReadingPosition(position)):
