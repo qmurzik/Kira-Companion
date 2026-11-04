@@ -127,6 +127,9 @@ extension QMSClient: DependencyKey {
             sendMessage: { chatId, message in
                 return try await mock.sendQMSMessage(chatId: chatId, message: message)
             },
+            sendMessageWithAttachments: { chatId, message, _ in
+                return try await mock.sendQMSMessage(chatId: chatId, message: message)
+            },
             deleteMessage: { _, _, _ in
                 return ""
             },
@@ -154,6 +157,9 @@ extension QMSClient: DependencyKey {
             deleteAllChats: unimplemented(),
             deleteChat: unimplemented(),
             sendMessage: { chatId, message in
+                return try await mock.sendQMSMessage(chatId: chatId, message: message)
+            },
+            sendMessageWithAttachments: { chatId, message, _ in
                 return try await mock.sendQMSMessage(chatId: chatId, message: message)
             },
             deleteMessage: unimplemented(),
