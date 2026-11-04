@@ -593,6 +593,7 @@ let project = Project(
             .feature(
                 name: "SettingsFeature",
                 dependencies: [
+                    .Internal.ComposerFeature,
                     .Internal.AnalyticsClient,
                     .Internal.CacheClient,
                     .Internal.Models,

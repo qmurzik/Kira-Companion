@@ -10,6 +10,7 @@ import ComposableArchitecture
 import SharedUI
 import SFSafeSymbols
 import Models
+import ComposerFeature
 
 public struct SettingsScreen: View {
         
@@ -29,6 +30,18 @@ public struct SettingsScreen: View {
                     .ignoresSafeArea()
                 
                 List {
+                    Section {
+                        NavigationLink {
+                            ReadingSettingsView()
+                        } label: {
+                            Label("Чтение и редактор", systemImage: "textformat.size")
+                        }
+                        NavigationLink {
+                            DraftsListView()
+                        } label: {
+                            Label("Черновики", systemImage: "doc.text")
+                        }
+                    }
                     ThemeSection()
                     BasicSection()
                     AdvancedSection()
@@ -343,7 +356,7 @@ extension BackgroundTheme {
     var title: LocalizedStringKey {
         switch self {
         case .blue: return "Blue"
-        case .black: return "Black"
+        case .black: return "Black (OLED)"
         }
     }
     

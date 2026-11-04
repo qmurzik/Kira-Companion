@@ -8,10 +8,20 @@ import AnalyticsClient
 
 public final class BBRenderer {
     
-    public static nonisolated(unsafe) let defaultAttributes: [NSAttributedString.Key: Any] = [
-        .font: UIFont.defaultBBFont,
-        .foregroundColor: UIColor(resource: .Labels.primary)
-    ]
+    /// Computed so reading preferences (text size, line spacing) apply to newly rendered posts.
+    public static var defaultAttributes: [NSAttributedString.Key: Any] {
+        var attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.defaultBBFont,
+            .foregroundColor: UIColor(resource: .Labels.primary)
+        ]
+        let spacing = ReadingPreferences.lineSpacing
+        if spacing > 0 {
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.lineSpacing = spacing
+            attributes[.paragraphStyle] = paragraph
+        }
+        return attributes
+    }
     
     private let baseAttributes: [NSAttributedString.Key: Any]
     
@@ -294,6 +304,12 @@ private extension String {
 
 public extension UIFont {
     static func preferredFont(forBBCodeSize size: Int?) -> UIFont {
+        let base = basePreferredFont(forBBCodeSize: size)
+        let scale = ReadingPreferences.fontScale
+        return scale == 1 ? base : base.withSize((base.pointSize * scale).rounded())
+    }
+    
+    private static func basePreferredFont(forBBCodeSize size: Int?) -> UIFont {
         switch size {
         case 1: return UIFont.preferredFont(forTextStyle: .caption2)
         case 2: return UIFont.preferredFont(forTextStyle: .footnote)

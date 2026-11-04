@@ -73,6 +73,12 @@ public struct AppView: View {
                     .ignoresSafeArea(.keyboard, edges: .bottom)
                 
             }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                ConnectionBanner(status: store.connectionStatus) {
+                    store.send(.retryConnectionTapped)
+                }
+                .animation(.snappy, value: store.connectionStatus)
+            }
             .overlay(alignment: .top) {
                 #if DEBUG
                 if store.showConnectionState {
@@ -494,5 +500,55 @@ extension LiquidTabView {
         default:
             return nil
         }
+    }
+}
+
+
+// MARK: - Connection banner (ForPDA Next)
+
+/// Thin, non-blocking status bar shown only when the forum connection is not healthy.
+struct ConnectionBanner: View {
+    let status: ForumConnectionStatus
+    let onRetry: () -> Void
+    
+    var body: some View {
+        switch status {
+        case .online:
+            EmptyView()
+        case .connecting:
+            bar(icon: nil, text: "Подключение к 4PDA…", showsRetry: false, tint: .secondary)
+        case .offline:
+            bar(icon: "wifi.slash", text: "Нет интернета — показаны сохранённые данные", showsRetry: false, tint: .orange)
+        case let .unreachable(retryIn):
+            bar(icon: "exclamationmark.icloud", text: "Сервер недоступен, повтор через \(Int(retryIn.rounded())) с", showsRetry: true, tint: .orange)
+        }
+    }
+    
+    private func bar(icon: String?, text: String, showsRetry: Bool, tint: Color) -> some View {
+        HStack(spacing: 8) {
+            if let icon {
+                Image(systemName: icon)
+            } else {
+                ProgressView().controlSize(.mini)
+            }
+            Text(text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+            Spacer(minLength: 4)
+            if showsRetry {
+                Button("Повторить", action: onRetry)
+                    .font(.footnote.weight(.semibold))
+                    .buttonStyle(.borderless)
+            }
+        }
+        .font(.footnote)
+        .foregroundStyle(tint)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity)
+        .background(.bar)
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("connection.banner")
     }
 }
