@@ -94,6 +94,8 @@ final class ComposerFeatureTests: XCTestCase {
         await store.receive(\.internal.publishResult)
         await store.receive(\.delegate.published)
         XCTAssertEqual(sent.value, ["Answer"])
+        // The sheet disappearing after publication must not resurrect the draft.
+        await store.send(.onDisappear)
         let draft = await drafts.load(target.draftKey)
         XCTAssertNil(draft, "draft is removed after confirmation")
     }

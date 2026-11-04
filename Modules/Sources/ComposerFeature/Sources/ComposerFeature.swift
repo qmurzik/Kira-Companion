@@ -83,6 +83,8 @@ public struct ComposerFeature: Sendable {
         public var issues: [BBIssue] = []
         public var lastSavedAt: Date?
         public var restoredFromDraft = false
+        /// Set after a confirmed publication or an explicit discard: nothing is saved any more.
+        public var isFinished = false
         @Presents public var alert: AlertState<Action.Alert>?
         @Shared(.appStorage("composer.showCharacterCount")) public var showCharacterCount = false
         @Shared(.appStorage("composer.highlightTags")) public var highlightTags = true
@@ -251,6 +253,9 @@ public struct ComposerFeature: Sendable {
 
             case .internal(.saveDraft):
                 return saveNow(state)
+                
+            case .internal(.draftSaved) where state.isFinished:
+                return .none
 
             case let .internal(.draftSaved(date)):
                 state.lastSavedAt = date
@@ -436,6 +441,7 @@ public struct ComposerFeature: Sendable {
             case let .internal(.publishResult(token, .success(.published(postId, topicId, offset)))):
                 state.submission.succeeded(token: token, postId: postId)
                 state.pendingSubmission = nil
+                state.isFinished = true
                 return .run { [key = state.draftKey] send in
                     // Draft is removed only now — after server confirmation.
                     try? await draftClient.delete(key)
@@ -465,6 +471,7 @@ public struct ComposerFeature: Sendable {
                 state.submission.verified(token: token, foundPostId: found)
                 state.pendingSubmission = nil
                 if let found {
+                    state.isFinished = true
                     return .run { [key = state.draftKey, target = state.target] send in
                         try? await draftClient.delete(key)
                         let topicId: Int? = if case let .reply(id) = target { id } else { nil }
@@ -513,6 +520,7 @@ public struct ComposerFeature: Sendable {
                 return .merge(saveNow(state), .send(.delegate(.close)))
 
             case .alert(.presented(.discardDraft)):
+                state.isFinished = true
                 return .merge(
                     .cancel(id: CancelID.saveDraft),
                     .cancel(id: CancelID.upload),
@@ -546,6 +554,7 @@ public struct ComposerFeature: Sendable {
 
     private func scheduleSave() -> Effect<Action> {
         .run { send in
+            // Debounced: only the last change within 600 ms is written.
             try await clock.sleep(for: .milliseconds(600))
             await send(.internal(.saveDraft))
         }
@@ -553,7 +562,7 @@ public struct ComposerFeature: Sendable {
     }
 
     private func saveNow(_ state: State) -> Effect<Action> {
-        guard state.isLoaded else { return .none }
+        guard state.isLoaded, !state.isFinished else { return .none }
         let draft = makeDraft(state)
         return .merge(
             .cancel(id: CancelID.saveDraft),
