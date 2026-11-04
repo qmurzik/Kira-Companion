@@ -15,6 +15,7 @@ import AnalyticsClient
 import NotificationsClient
 import TCAExtensions
 import ExyteChat
+import ComposerFeature
 
 @Reducer
 public struct QMSFeature: Reducer, Sendable {
@@ -35,6 +36,8 @@ public struct QMSFeature: Reducer, Sendable {
     @ObservableState
     public struct State: Equatable {
         @Presents var alert: AlertState<Action.Alert>?
+        /// Full editor (BBCode, attachments, drafts, verified sending).
+        @Presents public var composer: ComposerFeature.State?
         
         @Shared(.appSettings) var appSettings: AppSettings
         @Shared(.userSession) var userSession: UserSession?
@@ -69,6 +72,7 @@ public struct QMSFeature: Reducer, Sendable {
         case binding(BindingAction<State>)
         
         case alert(PresentationAction<Alert>)
+        case composer(PresentationAction<ComposerFeature.Action>)
         public enum Alert {
             case ok
         }
@@ -77,6 +81,7 @@ public struct QMSFeature: Reducer, Sendable {
         public enum View {
             case onAppear
             case sendMessageButtonTapped(DraftMessage)
+            case openComposerTapped(String)
             case loadMoreTriggered
             case urlTapped(URL)
         }
@@ -109,6 +114,26 @@ public struct QMSFeature: Reducer, Sendable {
         
         Reduce<State, Action> { state, action in
             switch action {
+            case let .view(.openComposerTapped(quickText)):
+                state.composer = ComposerFeature.State(
+                    target: .qms(dialogId: state.chatId),
+                    contextTitle: state.title,
+                    seedText: quickText,
+                    expanded: true
+                )
+                return .none
+                
+            case .composer(.presented(.delegate(.published))):
+                state.composer = nil
+                return .send(.internal(.loadChat))
+                
+            case .composer(.presented(.delegate(.close))):
+                state.composer = nil
+                return .none
+                
+            case .composer:
+                return .none
+                
             case .alert, .delegate:
                 return .none
                 
@@ -239,6 +264,9 @@ public struct QMSFeature: Reducer, Sendable {
             }
         }
         .ifLet(\.$alert, action: \.alert)
+        .ifLet(\.$composer, action: \.composer) {
+            ComposerFeature()
+        }
         
         // Disabled until redesign
         // Analytics()

@@ -154,6 +154,14 @@ struct LiquidTabView: View {
                 }
                 
                 Tab(
+                    AppTab.forum.title,
+                    systemSymbol: AppTab.forum.iconSymbol,
+                    value: .forum
+                ) {
+                    StackTabView(store: store.scope(\.forumTab, action: \.forumTab))
+                }
+                
+                Tab(
                     AppTab.favorites.title,
                     systemSymbol: AppTab.favorites.iconSymbol,
                     value: .favorites
@@ -163,11 +171,11 @@ struct LiquidTabView: View {
                 .badge(store.favoritesBadges)
                 
                 Tab(
-                    AppTab.forum.title,
-                    systemSymbol: AppTab.forum.iconSymbol,
-                    value: .forum
+                    AppTab.messages.title,
+                    systemSymbol: AppTab.messages.iconSymbol,
+                    value: .messages
                 ) {
-                    StackTabView(store: store.scope(\.forumTab, action: \.forumTab))
+                    StackTabView(store: store.scope(\.messagesTab, action: \.messagesTab))
                 }
                 
                 Tab(
@@ -208,7 +216,7 @@ struct LiquidTabView: View {
 struct OldTabView: View {
     
     @Perception.Bindable var store: StoreOf<AppFeature>
-    @State private var shouldAnimatedTabItem: [Bool] = [false, false, false, false]
+    @State private var shouldAnimatedTabItem: [Bool] = Array(repeating: false, count: AppTab.allCases.count)
     @Environment(\.backgroundColors) private var backgroundColors
 
     var body: some View {
@@ -225,6 +233,9 @@ struct OldTabView: View {
                 
                 StackTabView(store: store.scope(\.moreTab, action: \.moreTab))
                     .tag(AppTab.more)
+                
+                StackTabView(store: store.scope(\.messagesTab, action: \.messagesTab))
+                    .tag(AppTab.messages)
             }
             
             Group {
@@ -263,7 +274,7 @@ struct OldTabView: View {
     private func PDATabView() -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(AppTab.allCases, id: \.self) { tab in
+                ForEach(AppTab.displayOrder, id: \.self) { tab in
                     WithPerceptionTracking {
                         Button {
                             store.send(.didSelectTab(tab))
@@ -439,6 +450,8 @@ extension LiquidTabView {
             return getPage(for: store.scope(\.forumTab, action: \.forumTab))
         case .more:
             return getPage(for: store.scope(\.moreTab, action: \.moreTab))
+        case .messages:
+            return getPage(for: store.scope(\.messagesTab, action: \.messagesTab))
         }
     }
     

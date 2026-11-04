@@ -168,7 +168,7 @@ public struct FavoritesScreen: View {
                     ) {
                         send(.topicContextMenu(.goToEnd, favorite))
                     }
-                case .last, .unread:
+                case .last, .unread, .lastRead:
                     ContextButton(
                         text: LocalizedStringResource("Go To First", bundle: .module),
                         symbol: .chevronRight2

@@ -10,6 +10,7 @@ import ComposableArchitecture
 import SharedUI
 import SFSafeSymbols
 import ExyteChat
+import ComposerFeature
 
 @ViewAction(for: QMSFeature.self)
 public struct QMSScreen: View {
@@ -90,6 +91,9 @@ public struct QMSScreen: View {
             .navigationTitle(store.title)
             ._toolbarTitleDisplayMode(.inline)
             .alert($store.scope(\.$alert, action: \.alert))
+            .sheet(item: $store.scope(\.$composer, action: \.composer)) { store in
+                ComposerScreen(store: store)
+            }
             .onAppear {
                 send(.onAppear)
             }
@@ -105,7 +109,18 @@ public struct QMSScreen: View {
             }
             #endif
             
-            TextField(String(""), text: text, prompt: Text("qms.textfield.placeholder", bundle: .module))
+            Button {
+                send(.openComposerTapped(text.wrappedValue))
+                text.wrappedValue = ""
+            } label: {
+                Image(systemName: "square.and.pencil")
+                    .font(.title3)
+                    .frame(width: 36, height: 44)
+            }
+            .accessibilityLabel("Полный редактор: форматирование, файлы, черновик")
+            
+            TextField(String(""), text: text, prompt: Text("qms.textfield.placeholder", bundle: .module), axis: .vertical)
+                .lineLimit(1...6)
                 .padding()
                 .background(Color(.Background.quaternary), in: .rect(cornerRadius: 16))
             

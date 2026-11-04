@@ -69,6 +69,7 @@ public struct AppFeature: Reducer, Sendable {
         public var favoritesTab: StackTab.State
         public var forumTab:     StackTab.State
         public var moreTab:      StackTab.State
+        public var messagesTab:  StackTab.State
         
         @Presents public var logStore: LogStoreFeature.State?
         @Presents public var alert: AlertState<Never>?
@@ -105,6 +106,7 @@ public struct AppFeature: Reducer, Sendable {
             favoritesTab: StackTab.State = StackTab.State(root: .favorites(FavoritesFeature.State())),
             forumTab: StackTab.State = StackTab.State(root: .forum(.forumList(ForumsListFeature.State()))),
             moreTab: StackTab.State = StackTab.State(root: .more(.more(MoreFeature.State()))),
+            messagesTab: StackTab.State = StackTab.State(root: .qms(.qmsList(QMSListFeature.State()))),
             alert: AlertState<Never>? = nil,
             selectedTab: AppTab = .articles,
             previousTab: AppTab = .articles,
@@ -117,6 +119,7 @@ public struct AppFeature: Reducer, Sendable {
             self.favoritesTab = favoritesTab
             self.forumTab = forumTab
             self.moreTab = moreTab
+            self.messagesTab = messagesTab
             
             self.alert = alert
             
@@ -142,6 +145,7 @@ public struct AppFeature: Reducer, Sendable {
         case favoritesTab(StackTab.Action)
         case forumTab(StackTab.Action)
         case moreTab(StackTab.Action)
+        case messagesTab(StackTab.Action)
         
         case logStore(PresentationAction<LogStoreFeature.Action>)
         case alert(PresentationAction<Never>)
@@ -209,6 +213,10 @@ public struct AppFeature: Reducer, Sendable {
         }
         
         Scope(\.moreTab, action: \.moreTab) {
+            StackTab()
+        }
+        
+        Scope(\.messagesTab, action: \.messagesTab) {
             StackTab()
         }
         
@@ -557,19 +565,21 @@ public struct AppFeature: Reducer, Sendable {
             case let .articlesTab(.delegate(.showTabBar(show))),
                 let .favoritesTab(.delegate(.showTabBar(show))),
                 let .forumTab(.delegate(.showTabBar(show))),
-                let .moreTab(.delegate(.showTabBar(show))):
+                let .moreTab(.delegate(.showTabBar(show))),
+                let .messagesTab(.delegate(.showTabBar(show))):
                 state.showTabBar = show
                 return .none
                 
             case let .articlesTab(.delegate(.switchTab(to: tab))),
                 let .favoritesTab(.delegate(.switchTab(to: tab))),
                 let .forumTab(.delegate(.switchTab(to: tab))),
-                let .moreTab(.delegate(.switchTab(to: tab))):
+                let .moreTab(.delegate(.switchTab(to: tab))),
+                let .messagesTab(.delegate(.switchTab(to: tab))):
                 state.previousTab = state.selectedTab
                 state.selectedTab = tab
                 return .none
                 
-            case .articlesTab, .favoritesTab, .forumTab, .moreTab:
+            case .articlesTab, .favoritesTab, .forumTab, .moreTab, .messagesTab:
                 return .none
                 
             case .appDelegate:
@@ -610,6 +620,9 @@ public struct AppFeature: Reducer, Sendable {
             
         case .more:
             state.moreTab.path.removeAll()
+            
+        case .messages:
+            state.messagesTab.path.removeAll()
         }
         
         return removeNotifications(&state)
@@ -625,7 +638,7 @@ public struct AppFeature: Reducer, Sendable {
     private func removeNotifications(_ state: inout State) -> Effect<Action> {
         return .run { [tab = state.selectedTab] _ in
             switch tab {
-            case .articles, .forum, .more:
+            case .articles, .forum, .more, .messages:
                 break
             case .favorites:
                 break
@@ -645,6 +658,7 @@ public struct AppFeature: Reducer, Sendable {
         case .favorites: return .send(.favoritesTab(action))
         case .forum:     return .send(.forumTab(action))
         case .more:      return .send(.moreTab(action))
+        case .messages:  return .send(.messagesTab(action))
         }
     }
 }

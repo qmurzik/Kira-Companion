@@ -192,6 +192,7 @@ public struct TopicFeature: Reducer, Sendable {
         case `internal`(Internal)
         public enum Internal {
             case load
+            case restoreReadingPosition(ReadingPosition?)
             case refresh
             case goToPost(postId: Int, offset: Int, filter: TopicPostsFilter, forceRefresh: Bool)
             case changeKarma(postId: Int, isUp: Bool)
@@ -703,6 +704,17 @@ public struct TopicFeature: Reducer, Sendable {
                 state.postId = nil
                 return .none
                 
+            case .internal(.load) where state.goTo == .unread && state.appSettings.topicOpeningStrategy == .lastRead:
+                return .run { [topicId = state.topicId] send in
+                    await send(.internal(.restoreReadingPosition(await Self.readingStore.position(forTopic: topicId))))
+                }
+                
+            case let .internal(.restoreReadingPosition(position)):
+                if let position, let postId = position.postId {
+                    return jumpTo(.post(id: postId), false, &state)
+                }
+                return jumpTo(.unread, false, &state)
+                
             case .internal(.load):
                 switch state.goTo {
                 case .first:            return loadPage(&state)
@@ -764,11 +776,18 @@ public struct TopicFeature: Reducer, Sendable {
             case let .internal(.topicResponse(.success(topic))):
                 //customDump(topic)
                 state.topic = topic
+                let position = ReadingPosition(
+                    topicId: topic.id,
+                    topicTitle: topic.name,
+                    offset: state.pageNavigation.offset,
+                    postId: topic.posts.first?.id
+                )
+                let savePosition: Effect<Action> = .run { _ in await Self.readingStore.save(position) }
 
-                return .run { send in
+                return .merge(savePosition, .run { send in
                     await send(.pageNavigation(.update(count: topic.postsCount, offset: nil)))
                     await send(.internal(.topicNavigationUpdated(topic)))
-                }
+                })
 
             case let .internal(.topicNavigationUpdated(topic)):
                 return .run { [
@@ -882,6 +901,9 @@ public struct TopicFeature: Reducer, Sendable {
             await send(.internal(.loadTopic(targetOffset)))
         }
     }
+    
+    /// Local reading positions (persist across launches; no server round-trip).
+    static let readingStore = ReadingStore(fileURL: ReadingStore.defaultURL())
     
     /// Reply composer for this topic. Migrates the legacy single-string draft once.
     private func makeComposer(_ state: State) -> ComposerFeature.State {
