@@ -14,7 +14,7 @@ import BBBuilder
 @ViewAction(for: ForumEventLogFeature.self)
 public struct ForumEventLogScreen: View {
     
-    @Perception.Bindable public var store: StoreOf<ForumEventLogFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ForumEventLogFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

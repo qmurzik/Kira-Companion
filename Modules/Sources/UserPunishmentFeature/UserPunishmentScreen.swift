@@ -16,7 +16,7 @@ public struct UserPunishmentScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<UserPunishmentFeature>
+    @SwiftUI.Bindable public var store: StoreOf<UserPunishmentFeature>
     @FocusState private var focus: UserPunishmentFeature.State.Field?
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

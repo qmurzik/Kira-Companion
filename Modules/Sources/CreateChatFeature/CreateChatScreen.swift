@@ -14,7 +14,7 @@ public struct CreateChatScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<CreateChatFeature>
+    @SwiftUI.Bindable public var store: StoreOf<CreateChatFeature>
     
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

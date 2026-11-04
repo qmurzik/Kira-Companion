@@ -12,7 +12,7 @@ import Models
 
 public struct NotificationsScreen: View {
     
-    @Perception.Bindable public var store: StoreOf<NotificationsFeature>
+    @SwiftUI.Bindable public var store: StoreOf<NotificationsFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

@@ -118,7 +118,7 @@ struct FormUploadBoxRow: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable var store: StoreOf<FormUploadBoxFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormUploadBoxFeature>
     @Environment(\.tintColor) private var tintColor
     
     // MARK: - Body

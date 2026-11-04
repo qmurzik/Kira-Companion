@@ -84,7 +84,7 @@ public struct FormDropdownFeature: Reducer {
 @ViewAction(for: FormDropdownFeature.self)
 struct FormDropdownRow: View {
     
-    @Perception.Bindable var store: StoreOf<FormDropdownFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormDropdownFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

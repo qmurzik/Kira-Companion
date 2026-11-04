@@ -15,7 +15,7 @@ import SFSafeSymbols
 @ViewAction(for: DeviceTypeFeature.self)
 public struct DeviceTypeScreen: View {
     
-    @Perception.Bindable public var store: StoreOf<DeviceTypeFeature>
+    @SwiftUI.Bindable public var store: StoreOf<DeviceTypeFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

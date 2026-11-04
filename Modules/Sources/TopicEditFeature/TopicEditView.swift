@@ -14,7 +14,7 @@ import SFSafeSymbols
 @ViewAction(for: TopicEditFeature.self)
 public struct TopicEditView: View {
     
-    @Perception.Bindable public var store: StoreOf<TopicEditFeature>
+    @SwiftUI.Bindable public var store: StoreOf<TopicEditFeature>
     @FocusState private var focus: TopicEditFeature.State.Field?
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

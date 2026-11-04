@@ -16,7 +16,7 @@ public struct PageNavigation: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<PageNavigationFeature>
+    @SwiftUI.Bindable public var store: StoreOf<PageNavigationFeature>
     @FocusState private var focus: PageNavigationFeature.State.Field?
     @Binding private var minimized: Bool
     @Environment(\._tabViewBottomAccessoryPlacement) var placement

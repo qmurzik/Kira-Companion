@@ -99,7 +99,7 @@ public struct DeveloperFeature: Reducer, Sendable {
 
 public struct DeveloperScreen: View {
     
-    @Perception.Bindable public var store: StoreOf<DeveloperFeature>
+    @SwiftUI.Bindable public var store: StoreOf<DeveloperFeature>
     @Environment(\.backgroundColors) private var backgroundColors
     
     public init(store: StoreOf<DeveloperFeature>) {

@@ -15,7 +15,7 @@ public struct ForumMergeView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ForumMergeFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ForumMergeFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

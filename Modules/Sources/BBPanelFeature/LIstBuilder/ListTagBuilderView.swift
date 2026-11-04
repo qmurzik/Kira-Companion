@@ -14,7 +14,7 @@ public struct ListTagBuilderView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ListTagBuilderFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ListTagBuilderFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

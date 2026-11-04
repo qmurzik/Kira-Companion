@@ -38,7 +38,7 @@ public struct AppView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<AppFeature>
+    @SwiftUI.Bindable public var store: StoreOf<AppFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.colorScheme) private var systemColorScheme
     
@@ -215,7 +215,7 @@ struct LiquidTabView: View {
 @available(iOS, deprecated: 26.0, message: "Use LiquidTabView instead")
 struct OldTabView: View {
     
-    @Perception.Bindable var store: StoreOf<AppFeature>
+    @SwiftUI.Bindable var store: StoreOf<AppFeature>
     @State private var shouldAnimatedTabItem: [Bool] = Array(repeating: false, count: AppTab.allCases.count)
     @Environment(\.backgroundColors) private var backgroundColors
 

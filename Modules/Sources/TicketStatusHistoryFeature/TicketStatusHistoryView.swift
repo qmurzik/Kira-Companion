@@ -16,7 +16,7 @@ public struct TicketStatusHistoryView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<TicketStatusHistoryFeature>
+    @SwiftUI.Bindable public var store: StoreOf<TicketStatusHistoryFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

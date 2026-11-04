@@ -15,7 +15,7 @@ public struct SearchScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<SearchFeature>
+    @SwiftUI.Bindable public var store: StoreOf<SearchFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

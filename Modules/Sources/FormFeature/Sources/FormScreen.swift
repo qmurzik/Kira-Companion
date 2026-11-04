@@ -17,7 +17,7 @@ public struct FormScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<FormFeature>
+    @SwiftUI.Bindable public var store: StoreOf<FormFeature>
     @FocusState private var focusedField: Int?
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
@@ -173,7 +173,7 @@ public struct FormScreen: View {
 // MARK: - Destination Modifier
 
 struct DestinationModifier: ViewModifier {
-    @Perception.Bindable private var store: StoreOf<FormFeature>
+    @SwiftUI.Bindable private var store: StoreOf<FormFeature>
     
     init(store: StoreOf<FormFeature>) {
         self.store = store

@@ -12,7 +12,7 @@ import ReputationChangeFeature
 
 public struct StackTabView: View {
     
-    @Perception.Bindable public var store: StoreOf<StackTab>
+    @SwiftUI.Bindable public var store: StoreOf<StackTab>
     
     public var body: some View {
         WithPerceptionTracking {

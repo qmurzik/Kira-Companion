@@ -112,7 +112,7 @@ public struct FormFieldFeature: Reducer {
 
 struct FormFieldRow: View {
     
-    @Perception.Bindable var store: StoreOf<FormFieldFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormFieldFeature>
     @FocusState.Binding var focusedField: Int?
     
     var body: some View {

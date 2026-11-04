@@ -15,7 +15,7 @@ public struct ForumsListScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ForumsListFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ForumsListFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

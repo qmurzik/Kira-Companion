@@ -15,7 +15,7 @@ public struct ForumStatView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ForumStatFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ForumStatFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

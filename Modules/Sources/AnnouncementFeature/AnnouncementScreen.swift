@@ -18,7 +18,7 @@ public struct AnnouncementScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<AnnouncementFeature>
+    @SwiftUI.Bindable public var store: StoreOf<AnnouncementFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

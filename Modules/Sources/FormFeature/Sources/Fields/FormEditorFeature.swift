@@ -154,7 +154,7 @@ public struct FormEditorFeature: Reducer {
 @ViewAction(for: FormEditorFeature.self)
 struct FormEditorRow: View {
     
-    @Perception.Bindable var store: StoreOf<FormEditorFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormEditorFeature>
     @FocusState.Binding var focusedField: Int?
     
     var body: some View {

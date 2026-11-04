@@ -15,7 +15,7 @@ public struct ArticlesListScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ArticlesListFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ArticlesListFeature>
     @State private var scrollProxy: ScrollViewProxy?
     @Environment(\.backgroundColors) private var backgroundColors
     

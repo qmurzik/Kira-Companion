@@ -17,7 +17,7 @@ public struct QMSScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<QMSFeature>
+    @SwiftUI.Bindable public var store: StoreOf<QMSFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

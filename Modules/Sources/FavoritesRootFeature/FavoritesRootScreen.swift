@@ -19,7 +19,7 @@ public struct FavoritesRootScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<FavoritesRootFeature>
+    @SwiftUI.Bindable public var store: StoreOf<FavoritesRootFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

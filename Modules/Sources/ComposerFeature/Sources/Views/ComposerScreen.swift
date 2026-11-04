@@ -12,7 +12,7 @@ import SharedUI
 
 public struct ComposerScreen: View {
 
-    @Perception.Bindable public var store: StoreOf<ComposerFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ComposerFeature>
     @StateObject private var controller = ComposerTextController()
     @Environment(\.tintColor) private var tintColor
     @Environment(\.scenePhase) private var scenePhase

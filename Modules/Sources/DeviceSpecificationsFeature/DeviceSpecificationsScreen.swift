@@ -17,7 +17,7 @@ public struct DeviceSpecificationsScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<DeviceSpecificationsFeature>
+    @SwiftUI.Bindable public var store: StoreOf<DeviceSpecificationsFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

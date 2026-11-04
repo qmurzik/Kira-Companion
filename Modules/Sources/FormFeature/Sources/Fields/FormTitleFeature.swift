@@ -73,7 +73,7 @@ public struct FormTitleFeature: Reducer {
 @ViewAction(for: FormTitleFeature.self)
 struct FormTitleRow: View {
     
-    @Perception.Bindable var store: StoreOf<FormTitleFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormTitleFeature>
     @Environment(\.backgroundColors) private var backgroundColors
     
     var body: some View {

@@ -18,7 +18,7 @@ public struct MoreScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<MoreFeature>
+    @SwiftUI.Bindable public var store: StoreOf<MoreFeature>
     
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

@@ -23,7 +23,7 @@ public struct ForumScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ForumFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ForumFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     @State private var navigationMinimized = false
@@ -584,7 +584,7 @@ public struct ForumScreen: View {
 
 struct NavigationModifier: ViewModifier {
     
-    @Perception.Bindable private var store: StoreOf<ForumFeature>
+    @SwiftUI.Bindable private var store: StoreOf<ForumFeature>
     @Environment(\.tintColor) private var tintColor
     
     private var title: String {
@@ -622,7 +622,7 @@ struct NavigationModifier: ViewModifier {
     }
     
     struct FullScreenCoverModifier: ViewModifier {
-        @Perception.Bindable private var store: StoreOf<ForumFeature>
+        @SwiftUI.Bindable private var store: StoreOf<ForumFeature>
         @Environment(\.tintColor) private var tintColor
         
         init(store: StoreOf<ForumFeature>) {
@@ -642,7 +642,7 @@ struct NavigationModifier: ViewModifier {
     }
     
     struct SheetModifier: ViewModifier {
-        @Perception.Bindable private var store: StoreOf<ForumFeature>
+        @SwiftUI.Bindable private var store: StoreOf<ForumFeature>
         @Environment(\.tintColor) private var tintColor
         
         init(store: StoreOf<ForumFeature>) {

@@ -50,7 +50,7 @@ struct CommentView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<CommentFeature>
+    @SwiftUI.Bindable public var store: StoreOf<CommentFeature>
     
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

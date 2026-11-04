@@ -14,7 +14,7 @@ import TopicBuilder
 @ViewAction(for: FormPreviewFeature.self)
 struct FormPreviewView: View {
     
-    @Perception.Bindable var store: StoreOf<FormPreviewFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormPreviewFeature>
     
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

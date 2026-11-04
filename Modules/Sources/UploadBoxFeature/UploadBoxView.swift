@@ -15,7 +15,7 @@ public struct UploadBoxView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<UploadBoxFeature>
+    @SwiftUI.Bindable public var store: StoreOf<UploadBoxFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

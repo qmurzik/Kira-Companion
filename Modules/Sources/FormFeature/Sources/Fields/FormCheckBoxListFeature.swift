@@ -90,7 +90,7 @@ public struct FormCheckBoxListFeature: Reducer {
 @ViewAction(for: FormCheckBoxListFeature.self)
 struct FormCheckBoxListRow: View {
     
-    @Perception.Bindable var store: StoreOf<FormCheckBoxListFeature>
+    @SwiftUI.Bindable var store: StoreOf<FormCheckBoxListFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

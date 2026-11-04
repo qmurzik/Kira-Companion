@@ -28,7 +28,7 @@ public struct TopicScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<TopicFeature>
+    @SwiftUI.Bindable public var store: StoreOf<TopicFeature>
     
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
@@ -505,7 +505,7 @@ public struct TopicScreen: View {
 
 struct NavigationModifier: ViewModifier {
     
-    @Perception.Bindable private var store: StoreOf<TopicFeature>
+    @SwiftUI.Bindable private var store: StoreOf<TopicFeature>
     @Environment(\.tintColor) private var tintColor
     
     private var title: String {
@@ -542,7 +542,7 @@ struct NavigationModifier: ViewModifier {
     }
     
     struct FullScreenCoverModifier: ViewModifier {
-        @Perception.Bindable private var store: StoreOf<TopicFeature>
+        @SwiftUI.Bindable private var store: StoreOf<TopicFeature>
         @Environment(\.tintColor) private var tintColor
         
         init(store: StoreOf<TopicFeature>) {
@@ -575,7 +575,7 @@ struct NavigationModifier: ViewModifier {
     }
     
     struct SheetModifier: ViewModifier {
-        @Perception.Bindable private var store: StoreOf<TopicFeature>
+        @SwiftUI.Bindable private var store: StoreOf<TopicFeature>
         @Environment(\.tintColor) private var tintColor
         
         init(store: StoreOf<TopicFeature>) {

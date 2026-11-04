@@ -17,7 +17,7 @@ public struct MentionsScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<MentionsFeature>
+    @SwiftUI.Bindable public var store: StoreOf<MentionsFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     @State private var navigationMinimized = false

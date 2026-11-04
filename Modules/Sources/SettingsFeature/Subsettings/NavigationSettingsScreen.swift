@@ -15,7 +15,7 @@ public struct NavigationSettingsScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<NavigationSettingsFeature>
+    @SwiftUI.Bindable public var store: StoreOf<NavigationSettingsFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

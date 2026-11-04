@@ -15,7 +15,7 @@ public struct ReputationChangeView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ReputationChangeFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ReputationChangeFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

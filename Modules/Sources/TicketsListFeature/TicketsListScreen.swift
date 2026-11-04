@@ -18,7 +18,7 @@ public struct TicketsListScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<TicketsListFeature>
+    @SwiftUI.Bindable public var store: StoreOf<TicketsListFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

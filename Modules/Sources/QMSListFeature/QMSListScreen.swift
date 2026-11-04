@@ -17,7 +17,7 @@ public struct QMSListScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<QMSListFeature>
+    @SwiftUI.Bindable public var store: StoreOf<QMSListFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

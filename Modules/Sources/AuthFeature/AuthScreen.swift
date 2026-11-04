@@ -16,7 +16,7 @@ public struct AuthScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<AuthFeature>
+    @SwiftUI.Bindable public var store: StoreOf<AuthFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     @FocusState public var focus: AuthFeature.State.Field?

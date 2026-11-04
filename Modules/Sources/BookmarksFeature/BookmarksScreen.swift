@@ -13,7 +13,7 @@ import Models
 
 public struct BookmarksScreen: View {
     
-    @Perception.Bindable public var store: StoreOf<BookmarksFeature>
+    @SwiftUI.Bindable public var store: StoreOf<BookmarksFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

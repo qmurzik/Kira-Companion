@@ -17,7 +17,7 @@ public struct HistoryScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<HistoryFeature>
+    @SwiftUI.Bindable public var store: StoreOf<HistoryFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     @State private var navigationMinimized = false

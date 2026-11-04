@@ -15,7 +15,7 @@ public struct BBPanelView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<BBPanelFeature>
+    @SwiftUI.Bindable public var store: StoreOf<BBPanelFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

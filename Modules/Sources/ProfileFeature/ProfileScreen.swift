@@ -26,7 +26,7 @@ public struct ProfileScreen: View {
     
     // MARK: - Profile properties
     
-    @Perception.Bindable public var store: StoreOf<ProfileFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ProfileFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

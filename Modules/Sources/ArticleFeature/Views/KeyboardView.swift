@@ -15,7 +15,7 @@ struct KeyboardView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable var store: StoreOf<ArticleFeature>
+    @SwiftUI.Bindable var store: StoreOf<ArticleFeature>
     @FocusState.Binding var focus: ArticleFeature.State.Field?
     @Binding var isScrollDownVisible: Bool
     @Environment(\.tintColor) private var tintColor

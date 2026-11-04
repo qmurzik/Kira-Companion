@@ -15,7 +15,7 @@ struct SortView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable var store: StoreOf<SortFeature>
+    @SwiftUI.Bindable var store: StoreOf<SortFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     @State private var sortSelection: FavoriteSortType?

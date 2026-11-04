@@ -17,7 +17,7 @@ public struct FavoritesScreen: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<FavoritesFeature>
+    @SwiftUI.Bindable public var store: StoreOf<FavoritesFeature>
     @State private var navigationMinimized = false
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors

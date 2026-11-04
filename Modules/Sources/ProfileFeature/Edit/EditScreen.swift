@@ -17,7 +17,7 @@ import BBPanelFeature
 @ViewAction(for: EditFeature.self)
 public struct EditScreen: View {
     
-    @Perception.Bindable public var store: StoreOf<EditFeature>
+    @SwiftUI.Bindable public var store: StoreOf<EditFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     

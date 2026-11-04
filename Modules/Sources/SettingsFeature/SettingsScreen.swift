@@ -14,7 +14,7 @@ import ComposerFeature
 
 public struct SettingsScreen: View {
         
-    @Perception.Bindable public var store: StoreOf<SettingsFeature>
+    @SwiftUI.Bindable public var store: StoreOf<SettingsFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.backgroundColors) private var backgroundColors

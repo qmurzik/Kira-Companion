@@ -15,7 +15,7 @@ public struct ForumMoveView: View {
     
     // MARK: - Properties
     
-    @Perception.Bindable public var store: StoreOf<ForumMoveFeature>
+    @SwiftUI.Bindable public var store: StoreOf<ForumMoveFeature>
     @Environment(\.tintColor) private var tintColor
     @Environment(\.backgroundColors) private var backgroundColors
     
